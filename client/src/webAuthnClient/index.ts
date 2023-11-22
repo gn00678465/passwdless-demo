@@ -24,7 +24,20 @@ export default class WebAuthnClient {
     return credential;
   }
 
-  static async authenticate(challenge: string): Promise<void> {}
+  static async authenticate(
+    credentialIds: string[],
+    challenge: string,
+    options?: WebAuthnClientType.AuthenticateOptions
+  ): Promise<Credential | null> {
+    options = options ?? {};
+    const assertion = await navigator.credentials.get({
+      publicKey: new PublicKeyRequestOptions(credentialIds, challenge, options)
+        .publicKeyRequestOptions
+      // mediation: 'conditional'
+    });
+
+    return assertion;
+  }
 }
 
 // 產生 public key 的參數
@@ -54,7 +67,7 @@ class PublicKeyOptions {
         { alg: -7, type: 'public-key' },
         { alg: -257, type: 'public-key' }
       ],
-      timeout: this.options.timeout ?? 60000,
+      timeout: this.options?.timeout ?? 60000,
       excludeCredentials: this.options?.excludeCredentials,
       authenticatorSelection: {
         userVerification: this.options?.userVerification ?? 'required',
@@ -63,6 +76,42 @@ class PublicKeyOptions {
         authenticatorAttachment: this.options?.authenticatorAttachment
       },
       attestation: this.options?.attestation ?? 'indirect'
+    };
+  }
+}
+
+// 驗證的參數
+class PublicKeyRequestOptions {
+  credentialIds: string[];
+  challenge: string;
+  options: WebAuthnClientType.AuthenticateOptions;
+  constructor(
+    credentialIds: string[],
+    challenge: string,
+    options: WebAuthnClientType.AuthenticateOptions
+  ) {
+    this.credentialIds = credentialIds;
+    this.challenge = challenge;
+    this.options = options;
+  }
+
+  get publicKeyRequestOptions(): PublicKeyCredentialRequestOptions {
+    return {
+      challenge: Base64Url.decodeBase64Url(this.challenge),
+      rpId: window.location.hostname,
+      allowCredentials: this.credentialIds.map((id) => ({
+        id: Base64Url.decodeBase64Url(id),
+        type: 'public-key',
+        transports: this.options?.transport ?? [
+          'hybrid',
+          'usb',
+          'ble',
+          'nfc',
+          'internal'
+        ]
+      })),
+      timeout: this.options?.timeout ?? 60000,
+      userVerification: this.options?.userVerification ?? 'required'
     };
   }
 }
