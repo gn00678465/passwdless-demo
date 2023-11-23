@@ -2,12 +2,14 @@ import express, { Request, Response } from 'express';
 import cors from 'cors';
 import createHttpError from 'http-errors';
 import cookieParser from 'cookie-parser';
+import * as dotenv from 'dotenv';
 
 import db from './db/index';
 import challengeRouter from './routes/challenge';
 import registerRouter from './routes/register';
 import authenticationRouter from './routes/authentication';
 
+dotenv.config();
 const app = express();
 
 app.use(cookieParser());
@@ -20,9 +22,9 @@ app.use(
   })
 );
 // router
-app.use('/api', challengeRouter);
-app.use('/api/register', registerRouter);
-app.use('/api/authentication', authenticationRouter);
+// app.use('/api', challengeRouter);
+app.use('/api/v1/register', registerRouter);
+app.use('/api/v1/authentication', authenticationRouter);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {

@@ -1,13 +1,20 @@
 import { useState, useEffect } from 'react';
 import { Stack, TextField, Button, Box, Typography } from '@mui/material';
-import WebAuthnClient, { PublicKeyCredentialModel } from './webAuthnClient';
-import { fetchChallenge } from './service/challenge';
-import { postRegister } from './service/register';
-import { postAuthOptions } from './service/authentication';
+import { useNavigate } from 'react-router-dom';
+
+import WebAuthnClient, {
+  PublicKeyOptions,
+  PublicKeyCredentialAttestationAdapter,
+  PublicKeyCredentialAssertionAdapter
+} from './webAuthnClient';
+import { fetchRegisterOptions, postRegister } from './service/register';
+import { postAuthOptions, postAuthSignature } from './service/authentication';
+import { Base64Url } from './utils';
 
 export default function WebAuthnContext() {
   const [name, setName] = useState('');
   const [isAvailable, setIsAvailable] = useState<boolean>(false);
+  const navigator = useNavigate();
 
   useEffect(() => {
     async function getAvailable(): Promise<void> {
@@ -26,23 +33,40 @@ export default function WebAuthnContext() {
 
   async function register() {
     try {
-      const challenge = (await fetchChallenge()).data.data.challenge as string;
-      const credentials = await WebAuthnClient.createPublicKey(
+      const {
+        data: {
+          data: {
+            options: { challenge, rpId, rpName, excludeCredentials }
+          }
+        }
+      } = await fetchRegisterOptions(name);
+      const publicKeyOptions = new PublicKeyOptions(
         challenge,
         {
           id: crypto.getRandomValues(new Uint8Array(32)),
           name: name,
-          displayName: 'Lee'
+          displayName: name
         },
+        rpId,
+        rpName,
         {
           userVerification: 'required',
           attestation: 'direct',
-          authenticatorAttachment: 'platform'
+          authenticatorAttachment: 'platform',
+          excludeCredentials: excludeCredentials.map(({ id, ...args }) => {
+            return {
+              id: Base64Url.decodeBase64Url(id),
+              ...args
+            };
+          })
         }
-      );
+      ).publicKeyOptions;
+      const credentials =
+        await WebAuthnClient.createPublicKey(publicKeyOptions);
+      console.log(credentials);
       if (credentials) {
         await postRegister(
-          new PublicKeyCredentialModel(credentials, name).toJson()
+          new PublicKeyCredentialAttestationAdapter(credentials, name).toJson()
         );
       }
       setName(() => '');
@@ -53,7 +77,6 @@ export default function WebAuthnContext() {
 
   async function authenticating() {
     try {
-      const challenge = (await fetchChallenge()).data.data.challenge as string;
       const options = await postAuthOptions({
         username: name,
         user_verification: 'required'
@@ -61,12 +84,21 @@ export default function WebAuthnContext() {
       if (options) {
         const assertion = await WebAuthnClient.authenticate(
           [options.data.data.credential_id],
-          challenge,
+          options.data.data.challenge,
           {
             transport: ['internal']
           }
         );
         console.log(assertion);
+        if (assertion) {
+          const res = new PublicKeyCredentialAssertionAdapter(
+            assertion
+          ).toJson();
+          const result = await postAuthSignature(res);
+          if (result.data.data.token) {
+            navigator('/home');
+          }
+        }
       }
       setName(() => '');
     } catch (error) {

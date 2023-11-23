@@ -1,4 +1,8 @@
 import { Base64Url } from '../utils';
+import {
+  PublicKeyCredentialAttestation,
+  PublicKeyCredentialAssert
+} from './types';
 
 export default class WebAuthnClient {
   constructor() {}
@@ -12,13 +16,10 @@ export default class WebAuthnClient {
   }
 
   static async createPublicKey(
-    challenge: string,
-    user: PublicKeyCredentialUserEntity,
-    options?: WebAuthnClientType.CreatePubKeyOptions
+    publicKey: PublicKeyCredentialCreationOptions
   ): Promise<PublicKeyCredential | null> {
-    options = options ?? {};
     const publicKeyCredential = await navigator.credentials.create({
-      publicKey: new PublicKeyOptions(challenge, user, options).publicKeyOptions
+      publicKey: publicKey
     });
     if (!(publicKeyCredential instanceof PublicKeyCredential)) {
       throw new TypeError();
@@ -38,7 +39,7 @@ export default class WebAuthnClient {
     credentialIds: string[],
     challenge: string,
     options?: WebAuthnClientType.AuthenticateOptions
-  ): Promise<Credential | null> {
+  ): Promise<PublicKeyCredential | null> {
     options = options ?? {};
     const publicKeyCredential = await navigator.credentials.get({
       publicKey: new PublicKeyRequestOptions(credentialIds, challenge, options)
@@ -50,31 +51,37 @@ export default class WebAuthnClient {
       throw new TypeError();
     }
 
-    return publicKeyCredential;
+    return publicKeyCredential as PublicKeyCredential;
   }
 }
 
 // 產生 public key 的參數
-class PublicKeyOptions {
+export class PublicKeyOptions {
   challenge: string;
   user: PublicKeyCredentialUserEntity;
+  rpId: string;
+  rpName: string;
   options: WebAuthnClientType.CreatePubKeyOptions;
   constructor(
     challenge: string,
     user: PublicKeyCredentialUserEntity,
-    options: WebAuthnClientType.CreatePubKeyOptions
+    rpId: string,
+    rpName: string,
+    options?: WebAuthnClientType.CreatePubKeyOptions
   ) {
     this.challenge = challenge;
     this.user = user;
-    this.options = options;
+    this.rpId = rpId;
+    this.rpName = rpName;
+    this.options = options ?? {};
   }
 
   get publicKeyOptions(): PublicKeyCredentialCreationOptions {
     return {
       challenge: Base64Url.decodeBase64Url(this.challenge),
       rp: {
-        name: window.location.hostname,
-        id: window.location.hostname
+        name: this.rpName,
+        id: this.rpId
       },
       user: this.user,
       pubKeyCredParams: [
@@ -94,7 +101,7 @@ class PublicKeyOptions {
   }
 }
 
-// 驗證的參數
+// 產生驗證的參數
 class PublicKeyRequestOptions {
   credentialIds: string[];
   challenge: string;
@@ -130,8 +137,8 @@ class PublicKeyRequestOptions {
   }
 }
 
-// 轉換
-export class PublicKeyCredentialModel {
+// 轉換註冊用格式
+export class PublicKeyCredentialAttestationAdapter {
   authenticatorAttachment: string | null;
   id: string;
   rawId: ArrayBuffer;
@@ -147,19 +154,77 @@ export class PublicKeyCredentialModel {
     this.username = username;
   }
 
+  getAlgoName(num: number): string {
+    switch (num) {
+      case -7:
+        return 'ES256';
+      // case -8 ignored to to its rarity
+      case -257:
+        return 'RS256';
+      default:
+        throw new Error(`Unknown algorithm code: ${num}`);
+    }
+  }
+
+  #toAttestationJson(
+    instance: PublicKeyCredentialAttestationAdapter,
+    publicKey: ArrayBuffer
+  ): PublicKeyCredentialAttestation {
+    return {
+      credential_id: instance.id,
+      public_key: Base64Url.encodeBase64Url(publicKey),
+      username: instance.username,
+      authenticatorData: Base64Url.encodeBase64Url(
+        instance.response.getAuthenticatorData()
+      ),
+      clientData: Base64Url.encodeBase64Url(instance.response.clientDataJSON),
+      transports: instance.response.getTransports(),
+      algorithm: this.getAlgoName(instance.response.getPublicKeyAlgorithm())
+    };
+  }
+
   toJson() {
     const publicKey = this.response.getPublicKey();
     if (!publicKey) {
       throw new Error('Could not retrieve public key');
     }
+    return this.#toAttestationJson(this, publicKey);
+  }
+}
+
+// 轉換登入用格式
+export class PublicKeyCredentialAssertionAdapter {
+  id: string;
+  rawId: ArrayBuffer;
+  response: AuthenticatorAssertionResponse;
+  type: string;
+  authenticatorAttachment: string | null;
+  constructor(credential: PublicKeyCredential) {
+    this.id = credential.id;
+    this.rawId = credential.rawId;
+    this.response = credential.response as AuthenticatorAssertionResponse;
+    this.type = credential.type;
+    this.authenticatorAttachment = credential.authenticatorAttachment;
+  }
+
+  toJson() {
+    return this.#toAssertionJson(this);
+  }
+
+  #toAssertionJson(
+    instance: PublicKeyCredentialAssertionAdapter
+  ): PublicKeyCredentialAssert {
     return {
-      credential_id: this.id,
-      public_key: Base64Url.encodeBase64Url(publicKey),
-      username: this.username,
+      credential_id: instance.id,
       authenticatorData: Base64Url.encodeBase64Url(
-        this.response.getAuthenticatorData()
+        instance.response.authenticatorData
       ),
-      clientData: Base64Url.encodeBase64Url(this.response.clientDataJSON)
+      clientData: Base64Url.encodeBase64Url(instance.response.clientDataJSON),
+      signature: Base64Url.encodeBase64Url(instance.response.signature),
+      userHandle:
+        (instance.response.userHandle &&
+          Base64Url.encodeBase64Url(instance.response.userHandle)) ||
+        null
     };
   }
 }
