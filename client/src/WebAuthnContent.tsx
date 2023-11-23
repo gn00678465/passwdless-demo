@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Stack, TextField, Button, Box, Typography } from '@mui/material';
-import WebAuthnClient from './webAuthnClient';
+import WebAuthnClient, { PublicKeyCredentialModel } from './webAuthnClient';
 import { fetchChallenge } from './service/challenge';
+import { postRegister } from './service/register';
+import { postAuthOptions } from './service/authentication';
 
 export default function WebAuthnContext() {
   const [name, setName] = useState('');
   const [isAvailable, setIsAvailable] = useState<boolean>(false);
-
-  const [credentialIds, setCredentialIds] = useState<string[]>([]);
 
   useEffect(() => {
     async function getAvailable(): Promise<void> {
@@ -30,7 +30,7 @@ export default function WebAuthnContext() {
       const credentials = await WebAuthnClient.createPublicKey(
         challenge,
         {
-          id: Uint8Array.from('UZSL85T9AFC', (c) => c.charCodeAt(0)),
+          id: crypto.getRandomValues(new Uint8Array(32)),
           name: name,
           displayName: 'Lee'
         },
@@ -40,9 +40,10 @@ export default function WebAuthnContext() {
           authenticatorAttachment: 'platform'
         }
       );
-      console.log(credentials);
       if (credentials) {
-        setCredentialIds([credentials.id]);
+        await postRegister(
+          new PublicKeyCredentialModel(credentials, name).toJson()
+        );
       }
       setName(() => '');
     } catch (error) {
@@ -53,14 +54,20 @@ export default function WebAuthnContext() {
   async function authenticating() {
     try {
       const challenge = (await fetchChallenge()).data.data.challenge as string;
-      const assertion = await WebAuthnClient.authenticate(
-        credentialIds,
-        challenge,
-        {
-          transport: ['internal']
-        }
-      );
-      console.log(assertion);
+      const options = await postAuthOptions({
+        username: name,
+        user_verification: 'required'
+      });
+      if (options) {
+        const assertion = await WebAuthnClient.authenticate(
+          [options.data.data.credential_id],
+          challenge,
+          {
+            transport: ['internal']
+          }
+        );
+        console.log(assertion);
+      }
       setName(() => '');
     } catch (error) {
       console.error(error);

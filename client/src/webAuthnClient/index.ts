@@ -15,13 +15,23 @@ export default class WebAuthnClient {
     challenge: string,
     user: PublicKeyCredentialUserEntity,
     options?: WebAuthnClientType.CreatePubKeyOptions
-  ): Promise<Credential | null> {
+  ): Promise<PublicKeyCredential | null> {
     options = options ?? {};
-    const credential = await navigator.credentials.create({
+    const publicKeyCredential = await navigator.credentials.create({
       publicKey: new PublicKeyOptions(challenge, user, options).publicKeyOptions
     });
+    if (!(publicKeyCredential instanceof PublicKeyCredential)) {
+      throw new TypeError();
+    }
+    if (
+      !(
+        publicKeyCredential.response instanceof AuthenticatorAttestationResponse
+      )
+    ) {
+      throw new TypeError('Unexpected attestation response');
+    }
 
-    return credential;
+    return publicKeyCredential as PublicKeyCredential;
   }
 
   static async authenticate(
@@ -30,13 +40,17 @@ export default class WebAuthnClient {
     options?: WebAuthnClientType.AuthenticateOptions
   ): Promise<Credential | null> {
     options = options ?? {};
-    const assertion = await navigator.credentials.get({
+    const publicKeyCredential = await navigator.credentials.get({
       publicKey: new PublicKeyRequestOptions(credentialIds, challenge, options)
         .publicKeyRequestOptions
       // mediation: 'conditional'
     });
 
-    return assertion;
+    if (!(publicKeyCredential instanceof PublicKeyCredential)) {
+      throw new TypeError();
+    }
+
+    return publicKeyCredential;
   }
 }
 
@@ -112,6 +126,40 @@ class PublicKeyRequestOptions {
       })),
       timeout: this.options?.timeout ?? 60000,
       userVerification: this.options?.userVerification ?? 'required'
+    };
+  }
+}
+
+// 轉換
+export class PublicKeyCredentialModel {
+  authenticatorAttachment: string | null;
+  id: string;
+  rawId: ArrayBuffer;
+  response: AuthenticatorAttestationResponse;
+  type: string;
+  username: string;
+  constructor(credential: PublicKeyCredential, username: string) {
+    this.authenticatorAttachment = credential.authenticatorAttachment;
+    this.id = credential.id;
+    this.rawId = credential.rawId;
+    this.response = credential.response as AuthenticatorAttestationResponse;
+    this.type = credential.type;
+    this.username = username;
+  }
+
+  toJson() {
+    const publicKey = this.response.getPublicKey();
+    if (!publicKey) {
+      throw new Error('Could not retrieve public key');
+    }
+    return {
+      credential_id: this.id,
+      public_key: Base64Url.encodeBase64Url(publicKey),
+      username: this.username,
+      authenticatorData: Base64Url.encodeBase64Url(
+        this.response.getAuthenticatorData()
+      ),
+      clientData: Base64Url.encodeBase64Url(this.response.clientDataJSON)
     };
   }
 }
