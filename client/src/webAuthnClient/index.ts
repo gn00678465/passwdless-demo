@@ -144,26 +144,14 @@ export class PublicKeyCredentialAttestationAdapter {
   rawId: ArrayBuffer;
   response: AuthenticatorAttestationResponse;
   type: string;
-  username: string;
-  constructor(credential: PublicKeyCredential, username: string) {
+  clientExtensionResults: AuthenticationExtensionsClientOutputs;
+  constructor(credential: PublicKeyCredential) {
     this.authenticatorAttachment = credential.authenticatorAttachment;
     this.id = credential.id;
     this.rawId = credential.rawId;
     this.response = credential.response as AuthenticatorAttestationResponse;
     this.type = credential.type;
-    this.username = username;
-  }
-
-  getAlgoName(num: number): string {
-    switch (num) {
-      case -7:
-        return 'ES256';
-      // case -8 ignored to to its rarity
-      case -257:
-        return 'RS256';
-      default:
-        throw new Error(`Unknown algorithm code: ${num}`);
-    }
+    this.clientExtensionResults = credential.getClientExtensionResults();
   }
 
   #toAttestationJson(
@@ -171,15 +159,25 @@ export class PublicKeyCredentialAttestationAdapter {
     publicKey: ArrayBuffer
   ): PublicKeyCredentialAttestation {
     return {
-      credential_id: instance.id,
-      public_key: Base64Url.encodeBase64Url(publicKey),
-      username: instance.username,
-      authenticatorData: Base64Url.encodeBase64Url(
-        instance.response.getAuthenticatorData()
-      ),
-      clientData: Base64Url.encodeBase64Url(instance.response.clientDataJSON),
-      transports: instance.response.getTransports(),
-      algorithm: this.getAlgoName(instance.response.getPublicKeyAlgorithm())
+      id: instance.id,
+      rawId: Base64Url.encodeBase64Url(instance.rawId),
+      authenticatorAttachment: instance.authenticatorAttachment,
+      response: {
+        publicKey: Base64Url.encodeBase64Url(publicKey),
+        authenticatorData: Base64Url.encodeBase64Url(
+          instance.response.getAuthenticatorData()
+        ),
+        clientDataJSON: Base64Url.encodeBase64Url(
+          instance.response.clientDataJSON
+        ),
+        transports: instance.response.getTransports(),
+        publicKeyAlgorithm: instance.response.getPublicKeyAlgorithm(),
+        attestationObject: Base64Url.encodeBase64Url(
+          instance.response.attestationObject
+        )
+      },
+      clientExtensionResults: instance.clientExtensionResults,
+      type: instance.type
     };
   }
 
@@ -228,3 +226,5 @@ export class PublicKeyCredentialAssertionAdapter {
     };
   }
 }
+
+export * from './types';

@@ -8,7 +8,6 @@ CREATE TABLE IF NOT EXISTS auth (
   credential_id TEXT NOT NULL,
   username TEXT NOT NULL,
   public_key TEXT NOT NULL,
-  algorithm TEXT NOT NULL,
   transports JSON
 )
 `);

@@ -1,15 +1,22 @@
-type PublicKeyCredentialAttestationKeys =
-  | 'credential_id'
-  | 'public_key'
-  | 'username'
-  | 'authenticatorData'
-  | 'clientData'
-  | 'algorithm';
+type PublicKeyCredentialAttestationKeys = keyof Omit<
+  PublicKeyCredential,
+  'response' | 'getClientExtensionResults' | 'rawId' | 'authenticatorAttachment'
+>;
 
-export type PublicKeyCredentialAttestation = Record<
-  PublicKeyCredentialAttestationKeys,
-  string
-> & { transports: string[] };
+export interface PublicKeyCredentialAttestation
+  extends Record<PublicKeyCredentialAttestationKeys, string> {
+  authenticatorAttachment: string | null;
+  rawId: string;
+  response: {
+    publicKey: string;
+    authenticatorData: string;
+    clientDataJSON: string;
+    transports: string[];
+    publicKeyAlgorithm: number;
+    attestationObject: string;
+  };
+  clientExtensionResults: AuthenticationExtensionsClientOutputs;
+}
 
 type PublicKeyCredentialAssertKeys =
   | 'credential_id'

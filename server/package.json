@@ -13,10 +13,11 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@hexagon/base64": "^1.1.28",
+    "@simplewebauthn/server": "^8.3.5",
     "@types/express": "^4.17.21",
     "@types/node": "^20.9.3",
     "better-sqlite3": "^9.1.1",
-    "cbor": "^9.0.1",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
@@ -27,6 +28,7 @@
     "uuid": "^9.0.1"
   },
   "devDependencies": {
+    "@simplewebauthn/typescript-types": "^8.3.4",
     "@types/better-sqlite3": "^7.6.8",
     "@types/cookie-parser": "^1.4.6",
     "@types/cors": "^2.8.17",

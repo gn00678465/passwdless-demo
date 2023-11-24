@@ -1,4 +1,4 @@
-import db from '../db/index';
+import db from '../../db/index';
 
 // register
 export function getUserRegisteredAuthenticators<T>(username: string): T[] {
@@ -10,13 +10,12 @@ export function registerUserAuthenticator(
   username: string,
   credentialId: string,
   publicKey: string,
-  transports: string,
-  algorithm: string
+  transports: string
 ) {
   const stmt = db.prepare<string[]>(
-    'INSERT INTO auth (credential_id, username, public_key, algorithm, transports) VALUES (?, ?, ?, ?, ?)'
+    'INSERT INTO auth (credential_id, username, public_key, transports) VALUES (?, ?, ?, ?)'
   );
-  stmt.run(credentialId, username, publicKey, algorithm, transports);
+  stmt.run(credentialId, username, publicKey, transports);
 }
 
 // challenge
@@ -31,7 +30,7 @@ export function getUserRegisterChallenge(username: string) {
   const fmt = db.prepare<string[]>(
     'SELECT challenge FROM challenge WHERE username = ?'
   );
-  return fmt.get(username);
+  return fmt.get(username) as { challenge: string };
 }
 
 export function clearUserRegisterChallenge(username: string) {

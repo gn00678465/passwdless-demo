@@ -1,25 +1,17 @@
+import base64 from '@hexagon/base64';
+
 export class Base64Url {
   constructor() {}
 
-  static #toBuffer(text: string): ArrayBuffer {
-    return Uint8Array.from(text, (c) => c.charCodeAt(0)).buffer;
-  }
-
-  static #parseBuffer(buffer: ArrayBuffer): string {
-    return String.fromCharCode(...new Uint8Array(buffer));
-  }
-
   static encodeBase64Url(buffer: ArrayBuffer): string {
-    const text = btoa(this.#parseBuffer(buffer));
-    return text.replace(/\+/g, '-').replace(/\//, '_');
+    return base64.fromArrayBuffer(buffer, true);
   }
 
   static decodeBase64Url(base64url: string): ArrayBuffer {
-    const text = base64url.replace(/-/g, '+').replace(/_/, '/');
-    return this.#toBuffer(atob(text));
+    return base64.toArrayBuffer(base64url);
   }
 
   static isBase64Url(base64url: string): boolean {
-    return base64url.match(/^[a-zA-Z0-9\-_]+=*$/) !== null;
+    return base64.validate(base64url, true);
   }
 }

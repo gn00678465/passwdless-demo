@@ -1,4 +1,4 @@
-export interface Authenticator {
+export interface PublicKeyCredentialUserEntityJSON {
   id: number;
   credential_id: string;
   username: string;

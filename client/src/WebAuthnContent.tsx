@@ -35,9 +35,7 @@ export default function WebAuthnContext() {
     try {
       const {
         data: {
-          data: {
-            options: { challenge, rpId, rpName, excludeCredentials }
-          }
+          data: { challenge, rpId, rpName, excludeCredentials }
         }
       } = await fetchRegisterOptions(name);
       const publicKeyOptions = new PublicKeyOptions(
@@ -57,7 +55,7 @@ export default function WebAuthnContext() {
             return {
               id: Base64Url.decodeBase64Url(id),
               ...args
-            };
+            } as PublicKeyCredentialDescriptor;
           })
         }
       ).publicKeyOptions;
@@ -66,12 +64,21 @@ export default function WebAuthnContext() {
       console.log(credentials);
       if (credentials) {
         await postRegister(
-          new PublicKeyCredentialAttestationAdapter(credentials, name).toJson()
+          name,
+          new PublicKeyCredentialAttestationAdapter(credentials).toJson()
         );
       }
       setName(() => '');
     } catch (error) {
-      console.error(error);
+      if (error instanceof Error) {
+        if (error.name === 'InvalidStateError') {
+          console.error(error.name);
+        }
+        if (error.name === 'NotAllowedError') {
+          console.error(error.name);
+        }
+        console.error(error);
+      }
     }
   }
 
