@@ -10,6 +10,15 @@ declare namespace Service {
     }[];
   }
 
+  interface AuthenticateEntryOptions {
+    challenge: string;
+    allowCredentials: {
+      id: string;
+      type: 'public-key';
+      transports: string[];
+    }[];
+  }
+
   interface SuccessfulResponse<T> {
     status: 'Success';
     data: T;

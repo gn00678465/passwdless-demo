@@ -12,7 +12,7 @@ export class Base64Url {
     return buffer;
   }
 
-  static #toBase64(buffer: ArrayBuffer): string {
+  static #fromBuffer(buffer: ArrayBuffer): string {
     const bytes = new Uint8Array(buffer);
     let str: string = '';
 
@@ -24,12 +24,12 @@ export class Base64Url {
   }
 
   static encodeBase64Url(buffer: ArrayBuffer): string {
-    const text = this.#toBase64(buffer);
+    const text = this.#fromBuffer(buffer);
     return text.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
   }
 
   static decodeBase64Url(base64url: string): ArrayBuffer {
-    const text = base64url.replace(/-/g, '+').replace(/_/, '/');
+    const text = base64url.replace(/-/g, '+').replace(/_/g, '/');
     const padLength = (4 - (text.length % 4)) % 4;
     const base64 = text.padEnd(text.length + padLength, '=');
     return this.#toBuffer(atob(base64));

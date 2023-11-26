@@ -3,12 +3,6 @@ import {
   VerifiedRegistrationResponse
 } from '@simplewebauthn/server';
 
-import { Base64Url } from '../../utils';
-import {
-  decodeAttestationObject,
-  parseAuthenticatorData
-} from '@simplewebauthn/server/helpers';
-
 export interface VerifyRegistrationResponseOptions {
   response: Register.PublicKeyCredentialAttestation;
   expectedChallenge: string;

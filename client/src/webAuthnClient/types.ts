@@ -18,13 +18,15 @@ export interface PublicKeyCredentialAttestation
   clientExtensionResults: AuthenticationExtensionsClientOutputs;
 }
 
-type PublicKeyCredentialAssertKeys =
-  | 'credential_id'
-  | 'authenticatorData'
-  | 'clientData'
-  | 'signature';
-
-export type PublicKeyCredentialAssert = Record<
-  PublicKeyCredentialAssertKeys,
-  string
-> & { userHandle: string | null };
+export interface PublicKeyCredentialAssert {
+  id: string;
+  rawId: string;
+  authenticatorAttachment: string | null;
+  type: string;
+  response: {
+    clientDataJSON: string;
+    authenticatorData: string;
+    signature: string;
+    userHandle: string | null;
+  };
+}

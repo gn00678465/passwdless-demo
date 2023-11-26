@@ -36,15 +36,10 @@ export default class WebAuthnClient {
   }
 
   static async authenticate(
-    credentialIds: string[],
-    challenge: string,
-    options?: WebAuthnClientType.AuthenticateOptions
+    publicKey: PublicKeyCredentialRequestOptions
   ): Promise<PublicKeyCredential | null> {
-    options = options ?? {};
     const publicKeyCredential = await navigator.credentials.get({
-      publicKey: new PublicKeyRequestOptions(credentialIds, challenge, options)
-        .publicKeyRequestOptions
-      // mediation: 'conditional'
+      publicKey: publicKey
     });
 
     if (!(publicKeyCredential instanceof PublicKeyCredential)) {
@@ -102,35 +97,22 @@ export class PublicKeyOptions {
 }
 
 // 產生驗證的參數
-class PublicKeyRequestOptions {
-  credentialIds: string[];
+export class PublicKeyRequestOptions {
   challenge: string;
   options: WebAuthnClientType.AuthenticateOptions;
   constructor(
-    credentialIds: string[],
     challenge: string,
-    options: WebAuthnClientType.AuthenticateOptions
+    options?: WebAuthnClientType.AuthenticateOptions
   ) {
-    this.credentialIds = credentialIds;
     this.challenge = challenge;
-    this.options = options;
+    this.options = options ?? {};
   }
 
   get publicKeyRequestOptions(): PublicKeyCredentialRequestOptions {
     return {
       challenge: Base64Url.decodeBase64Url(this.challenge),
       rpId: window.location.hostname,
-      allowCredentials: this.credentialIds.map((id) => ({
-        id: Base64Url.decodeBase64Url(id),
-        type: 'public-key',
-        transports: this.options?.transport ?? [
-          'hybrid',
-          'usb',
-          'ble',
-          'nfc',
-          'internal'
-        ]
-      })),
+      allowCredentials: this.options?.allowCredentials ?? [],
       timeout: this.options?.timeout ?? 60000,
       userVerification: this.options?.userVerification ?? 'required'
     };
@@ -213,16 +195,22 @@ export class PublicKeyCredentialAssertionAdapter {
     instance: PublicKeyCredentialAssertionAdapter
   ): PublicKeyCredentialAssert {
     return {
-      credential_id: instance.id,
-      authenticatorData: Base64Url.encodeBase64Url(
-        instance.response.authenticatorData
-      ),
-      clientData: Base64Url.encodeBase64Url(instance.response.clientDataJSON),
-      signature: Base64Url.encodeBase64Url(instance.response.signature),
-      userHandle:
-        (instance.response.userHandle &&
-          Base64Url.encodeBase64Url(instance.response.userHandle)) ||
-        null
+      id: instance.id,
+      rawId: Base64Url.encodeBase64Url(instance.rawId),
+      response: {
+        clientDataJSON: Base64Url.encodeBase64Url(
+          instance.response.clientDataJSON
+        ),
+        signature: Base64Url.encodeBase64Url(instance.response.signature),
+        userHandle:
+          instance.response.userHandle &&
+          Base64Url.encodeBase64Url(instance.response.userHandle),
+        authenticatorData: Base64Url.encodeBase64Url(
+          instance.response.authenticatorData
+        )
+      },
+      type: instance.type,
+      authenticatorAttachment: instance.authenticatorAttachment
     };
   }
 }

@@ -5,16 +5,20 @@ import { useNavigate } from 'react-router-dom';
 import WebAuthnClient, {
   PublicKeyOptions,
   PublicKeyCredentialAttestationAdapter,
-  PublicKeyCredentialAssertionAdapter
+  PublicKeyCredentialAssertionAdapter,
+  PublicKeyRequestOptions
 } from './webAuthnClient';
 import { fetchRegisterOptions, postRegister } from './service/register';
-import { postAuthOptions, postAuthSignature } from './service/authentication';
+import {
+  fetchAuthenticationOptions,
+  postAuthSignature
+} from './service/authentication';
 import { Base64Url } from './utils';
 
 export default function WebAuthnContext() {
   const [name, setName] = useState('');
   const [isAvailable, setIsAvailable] = useState<boolean>(false);
-  const navigator = useNavigate();
+  const navigate = useNavigate();
 
   useEffect(() => {
     async function getAvailable(): Promise<void> {
@@ -68,7 +72,6 @@ export default function WebAuthnContext() {
           new PublicKeyCredentialAttestationAdapter(credentials).toJson()
         );
       }
-      setName(() => '');
     } catch (error) {
       if (error instanceof Error) {
         if (error.name === 'InvalidStateError') {
@@ -79,37 +82,42 @@ export default function WebAuthnContext() {
         }
         console.error(error);
       }
+    } finally {
+      setName(() => '');
     }
   }
 
   async function authenticating() {
     try {
-      const options = await postAuthOptions({
-        username: name,
-        user_verification: 'required'
-      });
-      if (options) {
-        const assertion = await WebAuthnClient.authenticate(
-          [options.data.data.credential_id],
-          options.data.data.challenge,
-          {
-            transport: ['internal']
-          }
-        );
-        console.log(assertion);
-        if (assertion) {
-          const res = new PublicKeyCredentialAssertionAdapter(
-            assertion
-          ).toJson();
-          const result = await postAuthSignature(res);
-          if (result.data.data.token) {
-            navigator('/home');
+      const { status, data } = await fetchAuthenticationOptions(name);
+      if (status === 200) {
+        const {
+          data: { challenge, allowCredentials }
+        } = data;
+        const assertionOptions = new PublicKeyRequestOptions(challenge, {
+          allowCredentials: allowCredentials.map(({ id, ...args }) => {
+            return {
+              id: Base64Url.decodeBase64Url(id),
+              ...args
+            } as PublicKeyCredentialDescriptor;
+          })
+        }).publicKeyRequestOptions;
+        const assert = await WebAuthnClient.authenticate(assertionOptions);
+        if (assert) {
+          const { status, data } = await postAuthSignature(
+            name,
+            new PublicKeyCredentialAssertionAdapter(assert).toJson()
+          );
+          console.log({ status, data });
+          if (status === 200 && data.status === 'Success') {
+            navigate('/home');
           }
         }
       }
-      setName(() => '');
     } catch (error) {
       console.error(error);
+    } finally {
+      setName(() => '');
     }
   }
 

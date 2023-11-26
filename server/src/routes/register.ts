@@ -2,7 +2,7 @@ import express, { Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { VerifiedRegistrationResponse } from '@simplewebauthn/server';
 
-import { PublicKeyCredentialUserEntityJSON } from './types';
+import { AuthenticatorDevice } from './types';
 import {
   getUserRegisteredAuthenticators,
   saveUserRegisterChallenge,
@@ -28,9 +28,7 @@ router.post('/options', (req: Request, res: Response) => {
     });
   }
   const userAuthenticators =
-    getUserRegisteredAuthenticators<PublicKeyCredentialUserEntityJSON>(
-      username
-    );
+    getUserRegisteredAuthenticators<AuthenticatorDevice>(username);
   const options = {
     challenge: uuidv4(),
     rpId: process.env.RP_ID,
@@ -99,7 +97,7 @@ router.post(
       verification = await verifyRegistrationResponseAdapter({
         response: req.body.data,
         expectedChallenge: challenge.challenge,
-        expectedOrigin: ['http://localhost:5173', 'http://localhost'],
+        expectedOrigin: [process.env.ORIGIN_WEBSITE as string],
         expectedType: 'webauthn.create',
         requireUserVerification: true
       });
@@ -116,6 +114,7 @@ router.post(
         username,
         Base64Url.encodeBase64Url(registrationInfo.credentialID),
         Base64Url.encodeBase64Url(registrationInfo.credentialPublicKey),
+        registrationInfo.counter,
         JSON.stringify(transports)
       );
 

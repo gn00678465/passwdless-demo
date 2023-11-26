@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS auth (
   credential_id TEXT NOT NULL,
   username TEXT NOT NULL,
   public_key TEXT NOT NULL,
+  counter INTEGER NOT NULL,
   transports JSON
 )
 `);
@@ -15,7 +16,8 @@ CREATE TABLE IF NOT EXISTS auth (
 db.exec(`
 CREATE TABLE IF NOT EXISTS challenge(
   username TEXT NOT NULL UNIQUE,
-  challenge TEXT NOT NULL
+  challenge TEXT NOT NULL,
+  type TEXT NOT NULL
 )
 `);
 

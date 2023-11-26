@@ -1,7 +1,17 @@
 import express, { Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
+import { VerifiedAuthenticationResponse } from '@simplewebauthn/server';
+
 import db from '../db/index';
 import { Base64Url, concatArrayBuffers, sha256 } from '../utils';
+import {
+  getUserRegisteredAuthenticators,
+  saveUserAuthenticationChallenge,
+  getUserAuthenticationChallenge,
+  clearUserAuthenticationChallenge
+} from '../controllers/database/database';
+import { AuthenticatorDevice } from './types';
+import { verifyAuthenticationResponseAdapter } from '../controllers/adapter/authentication';
 
 const router = express.Router();
 
@@ -13,50 +23,106 @@ router.post('/options', async (req: Request, res: Response) => {
       message: '請輸入使用者名稱'
     });
   }
-  const stmt = db.prepare<string[]>(
-    'SELECT credential_id FROM auth WHERE username = ?'
-  );
-  const credential_id = stmt.get(username);
-  if (!credential_id) {
-    return res.status(403).json({
+  const userAuthenticators =
+    getUserRegisteredAuthenticators<AuthenticatorDevice>(username);
+
+  if (!userAuthenticators || !userAuthenticators.length) {
+    return res.status(400).json({
       status: 'Error',
       message: '使用者名稱不存在'
     });
   }
+  const options = {
+    challenge: uuidv4(),
+    allowCredentials: userAuthenticators.map((authenticator) => ({
+      id: authenticator.credential_id,
+      type: 'public-key',
+      transports: JSON.parse(authenticator.transports)
+    }))
+  };
+
+  saveUserAuthenticationChallenge(username, options.challenge);
+
   res.status(200).json({
     status: 'Success',
-    data: { challenge: uuidv4(), ...credential_id }
+    data: options
   });
 });
 
-router.post('/signature', async (req: Request, res: Response) => {
-  const { signature, credential_id, authenticatorData, clientData } = req.body;
-  if (!credential_id || !signature || !authenticatorData || !clientData) {
-    return res.status(403).json({
+type AuthenticateBody = Utilities.TypedRequest<
+  unknown,
+  { username: string; data: Authenticate.PublicKeyCredentialAssert }
+>;
+
+router.post('/', async (req: AuthenticateBody, res: Response) => {
+  const username = req.body.username;
+  const {
+    id,
+    rawId,
+    authenticatorAttachment,
+    type,
+    response: { clientDataJSON, authenticatorData, signature, userHandle }
+  } = req.body.data;
+  if (!id || !signature || !authenticatorData || !rawId) {
+    return res.status(400).json({
       status: 'Error',
       message: '缺少必要資訊'
     });
   }
-  const stmt = db.prepare<string[]>(
-    'SELECT public_key FROM auth WHERE credential_id = ?'
-  );
-  const dbResult = (await stmt.get(credential_id)) as {
-    public_key: string;
-  } | null;
-  if (!dbResult) {
-    return res.status(403).json({
-      status: 'Error',
-      message: 'Credential not exist'
-    });
-  }
-  const isValid = await verifySignature(
-    authenticatorData,
-    clientData,
-    signature,
-    dbResult.public_key
+
+  // (資料庫操作) 取得使用者目前的 challenge
+  const expectedChallenge = getUserAuthenticationChallenge(username);
+
+  // (資料庫操作) 從資料庫中檢查是否包含符合的驗證器
+  const userAuthenticators =
+    getUserRegisteredAuthenticators<AuthenticatorDevice>(username);
+
+  const authenticator = userAuthenticators.find(
+    (device) => device.credential_id === id
   );
 
-  if (isValid) {
+  if (!authenticator) {
+    return res.status(403).json({
+      status: 'Error',
+      message: 'User is not registered this device'
+    });
+  }
+  // 執行驗證
+  let verification: VerifiedAuthenticationResponse;
+
+  try {
+    verification = await verifyAuthenticationResponseAdapter(
+      {
+        response: req.body.data,
+        expectedChallenge: expectedChallenge.challenge,
+        expectedOrigin: [process.env.ORIGIN_WEBSITE as string],
+        expectedType: 'webauthn.get',
+        requireUserVerification: true,
+        expectedRPID: process.env.RP_ID as string
+      },
+      {
+        credentialID: new Uint8Array(
+          Base64Url.decodeBase64Url(authenticator.credential_id)
+        ),
+        credentialPublicKey: new Uint8Array(
+          Base64Url.decodeBase64Url(authenticator.public_key)
+        ),
+        counter: authenticator.counter,
+        transports:
+          authenticator.transports as unknown as Common.AuthenticatorTransportFuture[]
+      }
+    );
+  } catch (error) {
+    console.error(error);
+    if (error instanceof Error) {
+      return res.status(400).send({ error: error.message });
+    }
+    return res.status(400).send({ error: 'Unknown error' });
+  }
+
+  const { verified } = verification;
+
+  if (verified) {
     return res.status(200).json({
       status: 'Success',
       data: {

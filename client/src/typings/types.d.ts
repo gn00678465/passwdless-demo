@@ -17,6 +17,6 @@ declare namespace WebAuthnClientType {
   // authenticate 帶入的資訊
   export interface AuthenticateOptions extends CommonOptions {
     mediation?: CredentialMediationRequirement;
-    transport?: AuthenticatorTransport[];
+    allowCredentials?: PublicKeyCredentialDescriptor[] | undefined;
   }
 }
