@@ -1,5 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Stack, TextField, Button, Box, Typography } from '@mui/material';
+import {
+  Stack,
+  TextField,
+  Button,
+  Box,
+  Typography,
+  Alert
+} from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 
 import WebAuthnClient, {
@@ -19,6 +26,7 @@ export default function WebAuthnContext() {
   const [name, setName] = useState('');
   const [isAvailable, setIsAvailable] = useState<boolean>(false);
   const navigate = useNavigate();
+  const [error, setError] = useState('');
 
   useEffect(() => {
     async function getAvailable(): Promise<void> {
@@ -72,13 +80,16 @@ export default function WebAuthnContext() {
           new PublicKeyCredentialAttestationAdapter(credentials).toJson()
         );
       }
+      setError(() => '');
     } catch (error) {
       if (error instanceof Error) {
         if (error.name === 'InvalidStateError') {
-          console.error(error.name);
+          console.error('InvalidStateError', error.name);
+          setError(() => '此裝置已註冊過');
         }
         if (error.name === 'NotAllowedError') {
-          console.error(error.name);
+          console.error('NotAllowedError', error.name);
+          setError(() => '使用者已取消作業');
         }
         console.error(error);
       }
@@ -113,8 +124,16 @@ export default function WebAuthnContext() {
             navigate('/home');
           }
         }
+        setError(() => '');
       }
     } catch (error) {
+      if (error instanceof Error) {
+        if (error.name === 'NotAllowedError') {
+          console.error(error.name);
+          setError(() => '使用者已取消作業');
+        }
+        console.error(error);
+      }
       console.error(error);
     } finally {
       setName(() => '');
@@ -134,7 +153,11 @@ export default function WebAuthnContext() {
           setName(event.target.value);
         }}
       />
-
+      {error && (
+        <Alert variant="filled" severity="error" sx={{ mt: 3 }}>
+          {error}
+        </Alert>
+      )}
       {isAvailable ? (
         <Stack
           direction="row"
