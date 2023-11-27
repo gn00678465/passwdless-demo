@@ -2,6 +2,7 @@ import {
   verifyAuthenticationResponse,
   VerifiedAuthenticationResponse
 } from '@simplewebauthn/server';
+import { verifySignature } from '../helpers/verifySignature';
 
 export interface VerifyAuthenticationResponseOptions {
   response: Authenticate.PublicKeyCredentialAssert;
@@ -29,7 +30,7 @@ export async function verifyAuthenticationResponseAdapter(
   }: VerifyAuthenticationResponseOptions,
   authenticator: Common.AuthenticatorDevice
 ): Promise<VerifiedAuthenticationResponse> {
-  return await verifyAuthenticationResponse({
+  const { verified, authenticationInfo } = await verifyAuthenticationResponse({
     response: {
       id,
       rawId,
@@ -44,4 +45,6 @@ export async function verifyAuthenticationResponseAdapter(
     expectedRPID,
     authenticator: authenticator
   });
+
+  return { verified, authenticationInfo };
 }

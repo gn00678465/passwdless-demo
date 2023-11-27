@@ -8,7 +8,7 @@ export class Base64Url {
   }
 
   static decodeBase64Url(base64url: string): ArrayBuffer {
-    return base64.toArrayBuffer(base64url);
+    return base64.toArrayBuffer(base64url, true);
   }
 
   static isBase64Url(base64url: string): boolean {

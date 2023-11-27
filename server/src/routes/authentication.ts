@@ -2,7 +2,6 @@ import express, { Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { VerifiedAuthenticationResponse } from '@simplewebauthn/server';
 
-import db from '../db/index';
 import { Base64Url, concatArrayBuffers, sha256 } from '../utils';
 import {
   getUserRegisteredAuthenticators,
@@ -12,6 +11,7 @@ import {
 } from '../controllers/database/database';
 import { AuthenticatorDevice } from './types';
 import { verifyAuthenticationResponseAdapter } from '../controllers/adapter/authentication';
+import { verifySignature } from '../controllers/helpers/verifySignature';
 
 const router = express.Router();
 
@@ -77,11 +77,11 @@ router.post('/', async (req: AuthenticateBody, res: Response) => {
   const userAuthenticators =
     getUserRegisteredAuthenticators<AuthenticatorDevice>(username);
 
-  const authenticator = userAuthenticators.find(
+  const userAuthenticator = userAuthenticators.find(
     (device) => device.credential_id === id
   );
 
-  if (!authenticator) {
+  if (!userAuthenticator) {
     return res.status(403).json({
       status: 'Error',
       message: 'User is not registered this device'
@@ -89,6 +89,18 @@ router.post('/', async (req: AuthenticateBody, res: Response) => {
   }
   // 執行驗證
   let verification: VerifiedAuthenticationResponse;
+
+  const authenticator = {
+    credentialID: new Uint8Array(
+      Base64Url.decodeBase64Url(userAuthenticator.credential_id)
+    ),
+    credentialPublicKey: new Uint8Array(
+      Base64Url.decodeBase64Url(userAuthenticator.public_key)
+    ),
+    counter: userAuthenticator.counter,
+    transports:
+      userAuthenticator.transports as unknown as Common.AuthenticatorTransportFuture[]
+  };
 
   try {
     verification = await verifyAuthenticationResponseAdapter(
@@ -100,17 +112,7 @@ router.post('/', async (req: AuthenticateBody, res: Response) => {
         requireUserVerification: true,
         expectedRPID: process.env.RP_ID as string
       },
-      {
-        credentialID: new Uint8Array(
-          Base64Url.decodeBase64Url(authenticator.credential_id)
-        ),
-        credentialPublicKey: new Uint8Array(
-          Base64Url.decodeBase64Url(authenticator.public_key)
-        ),
-        counter: authenticator.counter,
-        transports:
-          authenticator.transports as unknown as Common.AuthenticatorTransportFuture[]
-      }
+      authenticator
     );
   } catch (error) {
     console.error(error);
@@ -122,6 +124,16 @@ router.post('/', async (req: AuthenticateBody, res: Response) => {
 
   const { verified } = verification;
 
+  // console.log(
+  //   'verified',
+  //   await verifySignature({
+  //     publicKey: userAuthenticator.public_key,
+  //     clientDataJSON,
+  //     authenticatorData,
+  //     signature
+  //   })
+  // );
+
   if (verified) {
     return res.status(200).json({
       status: 'Success',
@@ -131,6 +143,8 @@ router.post('/', async (req: AuthenticateBody, res: Response) => {
     });
   }
 
+  clearUserAuthenticationChallenge(username);
+
   return res.status(401).json({
     status: 'Error',
     message: '無法登入'
@@ -138,37 +152,3 @@ router.post('/', async (req: AuthenticateBody, res: Response) => {
 });
 
 export default router;
-
-async function verifySignature(
-  authenticatorData: string,
-  clientData: string,
-  signature: string,
-  publicKey: string
-): Promise<boolean> {
-  const clientDataHash = await sha256(Base64Url.decodeBase64Url(clientData));
-  const comboBuffer = concatArrayBuffers(
-    Base64Url.decodeBase64Url(authenticatorData),
-    clientDataHash
-  );
-  const signatureBuffer = Base64Url.decodeBase64Url(signature);
-  const publicKeyBuffer = Base64Url.decodeBase64Url(publicKey);
-
-  return await crypto.subtle.verify(
-    {
-      name: 'RSASSA-PKCS1-v1_5',
-      hash: 'SHA-256'
-    },
-    await crypto.subtle.importKey(
-      'spki',
-      publicKeyBuffer,
-      {
-        name: 'RSASSA-PKCS1-v1_5',
-        hash: 'SHA-256'
-      },
-      false,
-      ['verify']
-    ),
-    signatureBuffer,
-    comboBuffer
-  );
-}
