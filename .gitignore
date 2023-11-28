@@ -25,3 +25,5 @@
 **/.env
 **/.env.delelopment
 **/.env.production
+
+**/certs

@@ -4,17 +4,20 @@ services:
   traefik:
     image: traefik:v2.7
     container_name: traefik
-    command:
-      - "--providers.docker=true"
-      - "--providers.docker.exposedbydefault=false"
-      - "--entrypoints.web.address=:80"
-      - "--api.dashboard=true"
-      - "--api.insecure=true"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik=true"
+      - "traefik.http.routers.traefik.tls=true"
+      - "traefik.http.services.traefik.loadbalancer.server.port=8080"
     ports:
       - "80:80"
       - "8081:8080"
+      - "443:443"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - ./docker/traefik/traefik.yaml:/etc/traefik/traefik.yaml:ro
+      - ./docker/traefik/dynamic_conf.yaml:/etc/traefik/dynamic_conf.yaml:ro
+      - ./certs:/etc/certs:ro
     # networks:
     #   - frontend
   spa-to-http:
@@ -30,7 +33,8 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.spa-to-http.rule=Host(`serve-spa.localhost`)"
-      - "traefik.http.routers.spa-to-http.entrypoints=web"
+      - "traefik.http.routers.spa-to-http.entrypoints=websecure"
+      - "traefik.http.routers.spa-to-http.tls=true"
       - "traefik.http.services.spa-to-http.loadbalancer.server.port=8080" # port inside of frontend which should be used
     # networks:
     #   - frontend
@@ -41,11 +45,12 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.api-service.rule=Host(`serve-spa.localhost`) && PathPrefix(`/api`)"
-      - "traefik.http.routers.api-service.entrypoints=web"
+      - "traefik.http.routers.api-service.entrypoints=websecure"
+      - "traefik.http.routers.api-service.tls=true"
     environment:
         - RP_ID=serve-spa.localhost
         - RP_NAME=serve-spa.localhost
-        - ORIGIN_WEBSITE=http://serve-spa.localhost
+        - ORIGIN_WEBSITE=https://serve-spa.localhost
     # networks:
     #   - backend
 
