@@ -4,6 +4,7 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import MainLayout from './MainLayout.tsx';
 import WebAuthnContext from './WebAuthnContent.tsx';
 import ErrorPage from './404.tsx';
+import HomePage from './HomePage.tsx';
 
 import './index.css';
 
@@ -13,6 +14,15 @@ const router = createBrowserRouter([
     element: (
       <MainLayout>
         <WebAuthnContext />
+      </MainLayout>
+    ),
+    errorElement: <ErrorPage />
+  },
+  {
+    path: '/home',
+    element: (
+      <MainLayout>
+        <HomePage />
       </MainLayout>
     ),
     errorElement: <ErrorPage />

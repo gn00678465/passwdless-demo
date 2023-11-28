@@ -1,13 +1,32 @@
 import { useState, useEffect } from 'react';
-import { Stack, TextField, Button, Box, Typography } from '@mui/material';
-import WebAuthnClient, { PublicKeyCredentialModel } from './webAuthnClient';
-import { fetchChallenge } from './service/challenge';
-import { postRegister } from './service/register';
-import { postAuthOptions } from './service/authentication';
+import {
+  Stack,
+  TextField,
+  Button,
+  Box,
+  Typography,
+  Alert
+} from '@mui/material';
+import { useNavigate } from 'react-router-dom';
+
+import WebAuthnClient, {
+  PublicKeyOptions,
+  PublicKeyCredentialAttestationAdapter,
+  PublicKeyCredentialAssertionAdapter,
+  PublicKeyRequestOptions
+} from './webAuthnClient';
+import { fetchRegisterOptions, postRegister } from './service/register';
+import {
+  fetchAuthenticationOptions,
+  postAuthSignature
+} from './service/authentication';
+import { Base64Url } from './utils';
 
 export default function WebAuthnContext() {
   const [name, setName] = useState('');
   const [isAvailable, setIsAvailable] = useState<boolean>(false);
+  const navigate = useNavigate();
+  const [error, setError] = useState('');
 
   useEffect(() => {
     async function getAvailable(): Promise<void> {
@@ -26,51 +45,98 @@ export default function WebAuthnContext() {
 
   async function register() {
     try {
-      const challenge = (await fetchChallenge()).data.data.challenge as string;
-      const credentials = await WebAuthnClient.createPublicKey(
+      const {
+        data: {
+          data: { challenge, rpId, rpName, excludeCredentials }
+        }
+      } = await fetchRegisterOptions(name);
+      const publicKeyOptions = new PublicKeyOptions(
         challenge,
         {
           id: crypto.getRandomValues(new Uint8Array(32)),
           name: name,
-          displayName: 'Lee'
+          displayName: name
         },
+        rpId,
+        rpName,
         {
           userVerification: 'required',
           attestation: 'direct',
-          authenticatorAttachment: 'platform'
+          authenticatorAttachment: 'cross-platform',
+          excludeCredentials: excludeCredentials.map(({ id, ...args }) => {
+            return {
+              id: Base64Url.decodeBase64Url(id),
+              ...args
+            } as PublicKeyCredentialDescriptor;
+          })
         }
-      );
+      ).publicKeyOptions;
+      const credentials =
+        await WebAuthnClient.createPublicKey(publicKeyOptions);
+      console.log(credentials);
       if (credentials) {
         await postRegister(
-          new PublicKeyCredentialModel(credentials, name).toJson()
+          name,
+          new PublicKeyCredentialAttestationAdapter(credentials).toJson()
         );
       }
-      setName(() => '');
+      setError(() => '');
     } catch (error) {
-      console.error(error);
+      if (error instanceof Error) {
+        if (error.name === 'InvalidStateError') {
+          console.error('InvalidStateError', error.name);
+          setError(() => '此裝置已註冊過');
+        }
+        if (error.name === 'NotAllowedError') {
+          console.error('NotAllowedError', error.name);
+          setError(() => '使用者已取消作業');
+        }
+        console.error(error);
+      }
+    } finally {
+      setName(() => '');
     }
   }
 
   async function authenticating() {
     try {
-      const challenge = (await fetchChallenge()).data.data.challenge as string;
-      const options = await postAuthOptions({
-        username: name,
-        user_verification: 'required'
-      });
-      if (options) {
-        const assertion = await WebAuthnClient.authenticate(
-          [options.data.data.credential_id],
-          challenge,
-          {
-            transport: ['internal']
+      const { status, data } = await fetchAuthenticationOptions(name);
+      if (status === 200) {
+        const {
+          data: { challenge, allowCredentials }
+        } = data;
+        const assertionOptions = new PublicKeyRequestOptions(challenge, {
+          allowCredentials: allowCredentials.map(({ id, ...args }) => {
+            return {
+              id: Base64Url.decodeBase64Url(id),
+              ...args
+            } as PublicKeyCredentialDescriptor;
+          })
+        }).publicKeyRequestOptions;
+        const assert = await WebAuthnClient.authenticate(assertionOptions);
+        if (assert) {
+          console.log(assert);
+          const { status, data } = await postAuthSignature(
+            name,
+            new PublicKeyCredentialAssertionAdapter(assert).toJson()
+          );
+          if (status === 200 && data.status === 'Success') {
+            navigate('/home');
           }
-        );
-        console.log(assertion);
+        }
+        setError(() => '');
       }
-      setName(() => '');
     } catch (error) {
+      if (error instanceof Error) {
+        if (error.name === 'NotAllowedError') {
+          console.error(error.name);
+          setError(() => '使用者已取消作業');
+        }
+        console.error(error);
+      }
       console.error(error);
+    } finally {
+      setName(() => '');
     }
   }
 
@@ -87,7 +153,11 @@ export default function WebAuthnContext() {
           setName(event.target.value);
         }}
       />
-
+      {error && (
+        <Alert variant="filled" severity="error" sx={{ mt: 3 }}>
+          {error}
+        </Alert>
+      )}
       {isAvailable ? (
         <Stack
           direction="row"
