@@ -1,0 +1,66 @@
+version: '3.3'
+
+services:
+  traefik:
+    image: traefik:v2.7
+    container_name: traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik=true"
+      - "traefik.http.routers.traefik.tls=true"
+      - "traefik.http.services.traefik.loadbalancer.server.port=8080"
+    ports:
+      - "80:80"
+      - "8081:8080"
+      - "443:443"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - ./docker/traefik/traefik.yaml:/etc/traefik/traefik.yaml:ro
+      - ./docker/traefik/dynamic_conf.yaml:/etc/traefik/dynamic_conf.yaml:ro
+      - ./certs:/etc/certs:ro
+    # networks:
+    #   - frontend
+  spa-to-http:
+    container_name: frontend
+    image: madao0315/webauthn-client:latest
+    depends_on:
+      - api-service
+    links:
+      - api-service
+    environment:
+      - PORT=8080
+      - SPA_MODE=true
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.spa-to-http.rule=Host(`serve-spa.localhost`)"
+      - "traefik.http.routers.spa-to-http.entrypoints=websecure"
+      - "traefik.http.routers.spa-to-http.tls=true"
+      - "traefik.http.services.spa-to-http.loadbalancer.server.port=8080" # port inside of frontend which should be used
+    # networks:
+    #   - frontend
+    #   - backend
+  api-service:
+    container_name: backend
+    image: madao0315/webauthn-server:latest
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.api-service.rule=Host(`serve-spa.localhost`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.api-service.entrypoints=websecure"
+      - "traefik.http.routers.api-service.tls=true"
+    environment:
+        - RP_ID=serve-spa.localhost
+        - RP_NAME=serve-spa.localhost
+        - ORIGIN_WEBSITE=https://serve-spa.localhost
+    # networks:
+    #   - backend
+
+
+# networks:
+#   frontend:
+#     # Use a custom driver
+#     driver: bridge
+#     name: frontend-network
+#   backend:
+#     # Use a custom driver which takes special options
+#     # driver: custom-driver-2
+#     name: backend-network
