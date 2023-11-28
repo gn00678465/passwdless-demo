@@ -62,7 +62,7 @@ export default function WebAuthnContext() {
         {
           userVerification: 'required',
           attestation: 'direct',
-          authenticatorAttachment: 'platform',
+          authenticatorAttachment: 'cross-platform',
           excludeCredentials: excludeCredentials.map(({ id, ...args }) => {
             return {
               id: Base64Url.decodeBase64Url(id),
@@ -115,11 +115,11 @@ export default function WebAuthnContext() {
         }).publicKeyRequestOptions;
         const assert = await WebAuthnClient.authenticate(assertionOptions);
         if (assert) {
+          console.log(assert);
           const { status, data } = await postAuthSignature(
             name,
             new PublicKeyCredentialAssertionAdapter(assert).toJson()
           );
-          console.log({ status, data });
           if (status === 200 && data.status === 'Success') {
             navigate('/home');
           }
