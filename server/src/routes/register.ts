@@ -107,6 +107,8 @@ router.post(
         .json({ status: 'Error', message: (err as any).message });
     }
 
+    console.log(verification);
+
     const { verified, registrationInfo } = verification;
 
     if (verified && registrationInfo) {

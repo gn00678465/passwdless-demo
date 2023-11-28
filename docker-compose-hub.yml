@@ -19,9 +19,7 @@ services:
     #   - frontend
   spa-to-http:
     container_name: frontend
-    build:
-      context: "client" # name of the folder where Dockerfile is located
-      dockerfile: Dockerfile
+    image: madao0315/webauthn-client:latest
     depends_on:
       - api-service
     links:
@@ -39,9 +37,7 @@ services:
     #   - backend
   api-service:
     container_name: backend
-    build:
-      context: "server"
-      dockerfile: Dockerfile
+    image: madao0315/webauthn-server:latest
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.api-service.rule=Host(`serve-spa.localhost`) && PathPrefix(`/api`)"
