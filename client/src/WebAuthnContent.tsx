@@ -5,7 +5,10 @@ import {
   Button,
   Box,
   Typography,
-  Alert
+  Alert,
+  FormControlLabel,
+  Switch,
+  Collapse
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { of, switchMap } from 'rxjs';
@@ -23,12 +26,16 @@ import {
   postAuthSignature
 } from './service/authentication';
 import { Base64Url } from './utils';
+import AdvanceContext from './AdvanceContent';
 
 export default function WebAuthnContext() {
   const [name, setName] = useState('');
   const [isAvailable, setIsAvailable] = useState<boolean>(false);
   const navigate = useNavigate();
   const [error, setError] = useState('');
+  const [showAdv, setShowAdv] = useState(true);
+  const [attachment, setAttachment] =
+    useState<WebAuthnClientType.Attachment>(undefined);
 
   useEffect(() => {
     async function getAvailable(): Promise<void> {
@@ -64,7 +71,7 @@ export default function WebAuthnContext() {
         {
           userVerification: 'required',
           attestation: 'direct',
-          authenticatorAttachment: 'cross-platform',
+          authenticatorAttachment: attachment,
           excludeCredentials: excludeCredentials.map(({ id, ...args }) => {
             return {
               id: Base64Url.decodeBase64Url(id),
@@ -153,6 +160,13 @@ export default function WebAuthnContext() {
       });
   }
 
+  function handleChange(
+    _event: React.ChangeEvent<HTMLInputElement>,
+    checked: boolean
+  ) {
+    setShowAdv(checked);
+  }
+
   return (
     <Box width={400} sx={{ display: 'inline-block' }}>
       <TextField
@@ -204,6 +218,18 @@ export default function WebAuthnContext() {
           瀏覽器不支援 WebAuthn
         </Typography>
       )}
+      <Box sx={{ mt: 3, width: 400, textAlign: 'left' }}>
+        <FormControlLabel
+          control={<Switch checked={showAdv} onChange={handleChange} />}
+          label="Advance"
+        />
+        <Collapse in={showAdv}>
+          <AdvanceContext
+            attachment={attachment}
+            setAttachment={setAttachment}
+          ></AdvanceContext>
+        </Collapse>
+      </Box>
     </Box>
   );
 }

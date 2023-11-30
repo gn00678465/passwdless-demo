@@ -1,6 +1,8 @@
 declare namespace WebAuthnClientType {
   type AlgoParams = -7 | -257;
 
+  type Attachment = 'cross-platform' | 'platform' | undefined;
+
   interface CommonOptions {
     timeout?: number;
     userVerification?: UserVerificationRequirement;
