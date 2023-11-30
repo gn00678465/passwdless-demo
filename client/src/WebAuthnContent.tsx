@@ -8,6 +8,8 @@ import {
   Alert
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import { of, switchMap } from 'rxjs';
+import { AxiosError } from 'axios';
 
 import WebAuthnClient, {
   PublicKeyOptions,
@@ -99,45 +101,56 @@ export default function WebAuthnContext() {
   }
 
   async function authenticating() {
-    try {
-      const { status, data } = await fetchAuthenticationOptions(name);
-      if (status === 200) {
-        const {
-          data: { challenge, allowCredentials }
-        } = data;
-        const assertionOptions = new PublicKeyRequestOptions(challenge, {
-          allowCredentials: allowCredentials.map(({ id, ...args }) => {
-            return {
-              id: Base64Url.decodeBase64Url(id),
-              ...args
-            } as PublicKeyCredentialDescriptor;
-          })
-        }).publicKeyRequestOptions;
-        const assert = await WebAuthnClient.authenticate(assertionOptions);
-        if (assert) {
+    of(name)
+      .pipe(
+        switchMap((name) =>
+          fetchAuthenticationOptions(name).then((res) => res.data.data)
+        ),
+        switchMap(
+          async (options) =>
+            new PublicKeyRequestOptions(options.challenge, {
+              allowCredentials: options.allowCredentials.map(
+                ({ id, ...args }) => {
+                  return {
+                    id: Base64Url.decodeBase64Url(id),
+                    ...args
+                  } as PublicKeyCredentialDescriptor;
+                }
+              )
+            }).publicKeyRequestOptions
+        ),
+        switchMap((assertOpts) => WebAuthnClient.authenticate(assertOpts)),
+        switchMap((assert) => {
           console.log(assert);
-          const { status, data } = await postAuthSignature(
-            name,
-            new PublicKeyCredentialAssertionAdapter(assert).toJson()
-          );
-          if (status === 200 && data.status === 'Success') {
+          if (assert) {
+            return postAuthSignature(
+              name,
+              new PublicKeyCredentialAssertionAdapter(assert).toJson()
+            );
+          }
+          throw new Error('認證錯誤');
+        })
+      )
+      .subscribe({
+        next: (success) => {
+          if (success.status === 200 && success.data.status === 'Success') {
             navigate('/home');
           }
+        },
+        error(error: AxiosError<Error> | Error) {
+          if (error instanceof Error) {
+            if ('response' in error && 'data' in error.response!) {
+              setError(() => error.response?.data.message ?? 'Unknown Error');
+              return;
+            }
+            setError(() => error.message ?? 'Unknown Error');
+          }
+          console.log('error', error);
+        },
+        complete() {
+          setName(() => '');
         }
-        setError(() => '');
-      }
-    } catch (error) {
-      if (error instanceof Error) {
-        if (error.name === 'NotAllowedError') {
-          console.error(error.name);
-          setError(() => '使用者已取消作業');
-        }
-        console.error(error);
-      }
-      console.error(error);
-    } finally {
-      setName(() => '');
-    }
+      });
   }
 
   return (
