@@ -5,9 +5,14 @@ import {
   Button,
   Box,
   Typography,
-  Alert
+  Alert,
+  FormControlLabel,
+  Switch,
+  Collapse
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import { of, switchMap } from 'rxjs';
+import { AxiosError } from 'axios';
 
 import WebAuthnClient, {
   PublicKeyOptions,
@@ -21,12 +26,16 @@ import {
   postAuthSignature
 } from './service/authentication';
 import { Base64Url } from './utils';
+import AdvanceContext from './AdvanceContent';
 
 export default function WebAuthnContext() {
   const [name, setName] = useState('');
   const [isAvailable, setIsAvailable] = useState<boolean>(false);
   const navigate = useNavigate();
   const [error, setError] = useState('');
+  const [showAdv, setShowAdv] = useState(true);
+  const [attachment, setAttachment] =
+    useState<WebAuthnClientType.Attachment>(undefined);
 
   useEffect(() => {
     async function getAvailable(): Promise<void> {
@@ -62,7 +71,7 @@ export default function WebAuthnContext() {
         {
           userVerification: 'required',
           attestation: 'direct',
-          authenticatorAttachment: 'cross-platform',
+          authenticatorAttachment: attachment,
           excludeCredentials: excludeCredentials.map(({ id, ...args }) => {
             return {
               id: Base64Url.decodeBase64Url(id),
@@ -99,45 +108,63 @@ export default function WebAuthnContext() {
   }
 
   async function authenticating() {
-    try {
-      const { status, data } = await fetchAuthenticationOptions(name);
-      if (status === 200) {
-        const {
-          data: { challenge, allowCredentials }
-        } = data;
-        const assertionOptions = new PublicKeyRequestOptions(challenge, {
-          allowCredentials: allowCredentials.map(({ id, ...args }) => {
-            return {
-              id: Base64Url.decodeBase64Url(id),
-              ...args
-            } as PublicKeyCredentialDescriptor;
-          })
-        }).publicKeyRequestOptions;
-        const assert = await WebAuthnClient.authenticate(assertionOptions);
-        if (assert) {
+    of(name)
+      .pipe(
+        switchMap((name) =>
+          fetchAuthenticationOptions(name).then((res) => res.data.data)
+        ),
+        switchMap(
+          async (options) =>
+            new PublicKeyRequestOptions(options.challenge, {
+              allowCredentials: options.allowCredentials.map(
+                ({ id, ...args }) => {
+                  return {
+                    id: Base64Url.decodeBase64Url(id),
+                    ...args
+                  } as PublicKeyCredentialDescriptor;
+                }
+              )
+            }).publicKeyRequestOptions
+        ),
+        switchMap((assertOpts) => WebAuthnClient.authenticate(assertOpts)),
+        switchMap((assert) => {
           console.log(assert);
-          const { status, data } = await postAuthSignature(
-            name,
-            new PublicKeyCredentialAssertionAdapter(assert).toJson()
-          );
-          if (status === 200 && data.status === 'Success') {
+          if (assert) {
+            return postAuthSignature(
+              name,
+              new PublicKeyCredentialAssertionAdapter(assert).toJson()
+            );
+          }
+          throw new Error('認證錯誤');
+        })
+      )
+      .subscribe({
+        next: (success) => {
+          if (success.status === 200 && success.data.status === 'Success') {
             navigate('/home');
           }
+        },
+        error(error: AxiosError<Error> | Error) {
+          if (error instanceof Error) {
+            if ('response' in error && 'data' in error.response!) {
+              setError(() => error.response?.data.message ?? 'Unknown Error');
+              return;
+            }
+            setError(() => error.message ?? 'Unknown Error');
+          }
+          console.log('error', error);
+        },
+        complete() {
+          setName(() => '');
         }
-        setError(() => '');
-      }
-    } catch (error) {
-      if (error instanceof Error) {
-        if (error.name === 'NotAllowedError') {
-          console.error(error.name);
-          setError(() => '使用者已取消作業');
-        }
-        console.error(error);
-      }
-      console.error(error);
-    } finally {
-      setName(() => '');
-    }
+      });
+  }
+
+  function handleChange(
+    _event: React.ChangeEvent<HTMLInputElement>,
+    checked: boolean
+  ) {
+    setShowAdv(checked);
   }
 
   return (
@@ -191,6 +218,18 @@ export default function WebAuthnContext() {
           瀏覽器不支援 WebAuthn
         </Typography>
       )}
+      <Box sx={{ mt: 3, width: 400, textAlign: 'left' }}>
+        <FormControlLabel
+          control={<Switch checked={showAdv} onChange={handleChange} />}
+          label="Advance"
+        />
+        <Collapse in={showAdv}>
+          <AdvanceContext
+            attachment={attachment}
+            setAttachment={setAttachment}
+          ></AdvanceContext>
+        </Collapse>
+      </Box>
     </Box>
   );
 }

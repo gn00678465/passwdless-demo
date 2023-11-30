@@ -19,7 +19,10 @@ COPY --from=backend-builder /app/dist ./dist
 
 COPY package.json .
 
+RUN mkdir /app/db
 RUN npm install pm2 -g
+
+VOLUME /app/db
 
 EXPOSE 3000
 
