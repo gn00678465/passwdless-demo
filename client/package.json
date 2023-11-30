@@ -1,5 +1,5 @@
 {
-  "name": "passwdless-demo-client",
+  "name": "webauthn-demo-client",
   "private": true,
   "version": "0.0.0",
   "type": "module",
