@@ -22,7 +22,7 @@ services:
     #   - frontend
   spa-to-http:
     container_name: frontend
-    image: madao0315/webauthn-client:latest
+    image: gn00678465/webauthn-client:latest
     depends_on:
       - api-service
     links:
@@ -41,7 +41,7 @@ services:
     #   - backend
   api-service:
     container_name: backend
-    image: madao0315/webauthn-server:latest
+    image: gn00678465/webauthn-server:latest
     volumes:
       - ./db:/app/db
     labels:
