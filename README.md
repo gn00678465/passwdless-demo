@@ -2,6 +2,37 @@
 > WebAuthn 無密碼登入實做練習
 
 
+### 流程
+**註冊**
+```mermaid
+sequenceDiagram
+    Title: Registration
+    User ->> Browser: Click Regist
+    Browser ->> Server: 註冊
+    Server -->> Browser: 產生 PublicKeyCredential 相關參數
+    Browser ->> User: 請使用生物辨識或 PIN
+    User -->> Browser: User verified
+    Browser ->> Browser: Create PublicCredential
+    Browser ->> Server: This is PublicCredential
+    Server ->> Server: Verlify PublicCredential
+    Server -->> Browser: Device registered!
+```
+
+**登入**
+```mermaid
+sequenceDiagram
+    Title: Authentication
+    User ->> Browser: 輸入必要訊息(username) 
+    Browser ->> Server: 登入
+    Server -->> Browser: 產生 PublicKeyCredential 相關參數
+    Browser ->> User: 請使用生物辨識或 PIN
+    User -->> Browser: User verified
+    Browser ->> Browser: get PublicCredential
+    Browser ->> Server: This is signed data
+    Server ->> Server: Verlify signed using public key
+    Server -->> Browser: Welcome!
+```
+
 ### Feature
 - [ ] 將 WebAuthn 功能模組化
 - [ ] 後端驗證功能研究並實作
