@@ -5,7 +5,6 @@ import cookieParser from 'cookie-parser';
 import * as dotenv from 'dotenv';
 
 import db from './db/index';
-import challengeRouter from './routes/challenge';
 import registerRouter from './routes/register';
 import authenticationRouter from './routes/authentication';
 
@@ -17,7 +16,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(
   cors({
-    origin: ['http://localhost:5173'],
+    origin: ['http://localhost:5173', 'https://webauthn.localhost:5173'],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS'
   })
 );

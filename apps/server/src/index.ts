@@ -1,5 +1,15 @@
 import app from './app';
 import * as http from 'http';
+import * as https from 'https';
+import fs from 'node:fs';
+import path from 'node:path';
+
+
+
+const options = {
+  key: fs.readFileSync(path.resolve(process.cwd(), '../../certs/server.key')),
+  cert: fs.readFileSync(path.resolve(process.cwd(), '../../certs/server.crt')),
+}
 
 process.on('uncaughtException', (error) => {
   // 記錄錯誤下來，等到服務都處理完後，停掉該 process
@@ -14,6 +24,6 @@ process.on('unhandledRejection', (reason, promise) => {
   // 記錄於 log 上
 });
 
-const port = process.env.PORT || '3000';
-const server = http.createServer(app);
+const port = process.env.PORT || '3310';
+const server = https.createServer(options, app);
 server.listen(port);
