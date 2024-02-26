@@ -38,7 +38,7 @@
     "prettier": "^3.1.0",
     "typescript": "^5.2.2",
     "vite": "^5.0.0",
-    "@webauthn/browser": "workspace:*",
-    "@passless/unocss-config": "workspace:*"
+    "@passless/unocss-config": "workspace:*",
+    "@webauthn/browser": "workspace:*"
   }
 }

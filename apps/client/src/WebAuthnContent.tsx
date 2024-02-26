@@ -15,15 +15,15 @@ import {
 import { useNavigate, useLoaderData, Link } from "react-router-dom";
 import { of, switchMap } from "rxjs";
 import { AxiosError } from "axios";
-import {
-  isCMA,
-  isLocalAuthenticator,
-  createCredential,
-  getCredential,
-  getConditionalCredential
-} from "@webauthn/browser";
+// import {
+//   isCMA,
+//   isLocalAuthenticator,
+//   createCredential,
+//   getCredential,
+//   getConditionalCredential
+// } from "@webauthn/browser";
 
-import {
+import WebAuthnClient, {
   PublicKeyOptions,
   PublicKeyCredentialAttestationAdapter,
   PublicKeyCredentialAssertionAdapter,
@@ -48,7 +48,7 @@ export default function WebAuthnContext() {
   useEffect(() => {
     async function getAvailable(): Promise<void> {
       try {
-        const res = await isLocalAuthenticator();
+        const res = await WebAuthnClient.isAvailable();
         setIsAvailable(res);
       } catch (err) {
         setIsAvailable(false);
@@ -86,7 +86,7 @@ export default function WebAuthnContext() {
           })
         }
       ).publicKeyOptions;
-      const credentials = await createCredential(publicKeyOptions);
+      const credentials = await WebAuthnClient.createPublicKey(publicKeyOptions);
       console.log(credentials);
       if (credentials) {
         await postRegister(name, new PublicKeyCredentialAttestationAdapter(credentials).toJson());
@@ -124,7 +124,7 @@ export default function WebAuthnContext() {
               })
             }).publicKeyRequestOptions
         ),
-        switchMap((assertOpts) => getCredential(assertOpts)),
+        switchMap((assertOpts) => WebAuthnClient.authenticate(assertOpts)),
         switchMap((assert) => {
           console.log(assert);
           if (assert) {
@@ -156,47 +156,6 @@ export default function WebAuthnContext() {
           setName(() => "");
         }
       });
-  }
-
-  async function passkeyLogin() {
-    if (await isCMA()) {
-      of(null)
-        .pipe(
-          switchMap(() => fetchPasskeysOptions().then((res) => res.data.data)),
-          switchMap(
-            async (options) =>
-              new ConditionalPublicKeyRequestOptions(options.challenge, {
-                allowCredentials: []
-              }).publicKeyRequestOptions
-          ),
-          switchMap((assertOpts) => getConditionalCredential(assertOpts)),
-          switchMap((assert) => {
-            console.log(assert);
-            if (assert) {
-              return postPasskeysSignature(
-                new PublicKeyCredentialAssertionAdapter(assert).toJson()
-              );
-            }
-            throw new Error("認證錯誤");
-          })
-        )
-        .subscribe({
-          next: (success) => {
-            console.log("🚀 ~ of ~ success:", success);
-          },
-          error(error: AxiosError<Error> | Error) {
-            if (error instanceof Error) {
-              if ("response" in error && "data" in error.response!) {
-                setError(() => error.response?.data.message ?? "Unknown Error");
-                return;
-              }
-              setError(() => error.message ?? "Unknown Error");
-            }
-            console.log("error", error);
-          },
-          complete() {}
-        });
-    }
   }
 
   function handleChange(_event: React.ChangeEvent<HTMLInputElement>, checked: boolean) {
@@ -296,7 +255,7 @@ export default function WebAuthnContext() {
                     variant="contained"
                     fullWidth
                     onClick={async () => {
-                      await passkeyLogin();
+                      // await passkeyLogin();
                     }}
                   >
                     Passkeys

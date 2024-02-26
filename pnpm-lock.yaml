@@ -70,9 +70,6 @@ importers:
       '@vitejs/plugin-react':
         specifier: ^4.2.0
         version: 4.2.1(vite@5.1.4)
-      '@webauthn/browser':
-        specifier: workspace:*
-        version: link:../../packages/@webauthn-browser
       eslint:
         specifier: ^8.53.0
         version: 8.57.0
