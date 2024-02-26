@@ -1,0 +1,17 @@
+{
+  "name": "@passless-demo/monorepo",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "scripts": {
+    "@webauthn-browser": "pnpm --filter @webauthn/browser",
+    "passless-client": "pnpm --filter @passless-demo/client",
+    "passless-server": "pnpm --filter @passless-demo/server"
+  },
+  "devDependencies": {
+    "prettier": "^3.1.0"
+  }
+}

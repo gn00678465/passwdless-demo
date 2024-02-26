@@ -1,5 +1,5 @@
 {
-  "name": "webauthn-demo-server",
+  "name": "@passless-demo/server",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
