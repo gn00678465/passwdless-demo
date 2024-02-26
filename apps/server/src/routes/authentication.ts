@@ -1,42 +1,41 @@
-import express, { Request, Response } from 'express';
-import { v4 as uuidv4 } from 'uuid';
-import { VerifiedAuthenticationResponse } from '@simplewebauthn/server';
+import express, { Request, Response } from "express";
+import { v4 as uuidv4 } from "uuid";
+import { VerifiedAuthenticationResponse } from "@simplewebauthn/server";
 
-import { Base64Url, concatArrayBuffers, sha256 } from '../utils';
+import { Base64Url, concatArrayBuffers, sha256 } from "../utils";
 import {
   getUserRegisteredAuthenticators,
   saveUserAuthenticationChallenge,
   getUserAuthenticationChallenge,
   clearUserAuthenticationChallenge
-} from '../controllers/database/database';
-import { AuthenticatorDevice } from './types';
-import { verifyAuthenticationResponseAdapter } from '../controllers/adapter/authentication';
-import { verifySignature } from '../controllers/helpers/verifySignature';
+} from "../controllers/database/database";
+import { AuthenticatorDevice } from "./types";
+import { verifyAuthenticationResponseAdapter } from "../controllers/adapter/authentication";
+import { verifySignature } from "../controllers/helpers/verifySignature";
 
 const router = express.Router();
 
-router.post('/options', async (req: Request, res: Response) => {
+router.post("/options", async (req: Request, res: Response) => {
   const { username, user_verification } = req.body;
   if (!username) {
     return res.status(403).json({
-      status: 'Error',
-      message: '請輸入使用者名稱'
+      status: "Error",
+      message: "請輸入使用者名稱"
     });
   }
-  const userAuthenticators =
-    getUserRegisteredAuthenticators<AuthenticatorDevice>(username);
+  const userAuthenticators = getUserRegisteredAuthenticators<AuthenticatorDevice>(username);
 
   if (!userAuthenticators || !userAuthenticators.length) {
     return res.status(400).json({
-      status: 'Error',
-      message: '使用者名稱不存在'
+      status: "Error",
+      message: "使用者名稱不存在"
     });
   }
   const options = {
     challenge: uuidv4(),
     allowCredentials: userAuthenticators.map((authenticator) => ({
       id: authenticator.credential_id,
-      type: 'public-key',
+      type: "public-key",
       transports: JSON.parse(authenticator.transports)
     }))
   };
@@ -44,7 +43,7 @@ router.post('/options', async (req: Request, res: Response) => {
   saveUserAuthenticationChallenge(username, options.challenge);
 
   res.status(200).json({
-    status: 'Success',
+    status: "Success",
     data: options
   });
 });
@@ -54,7 +53,7 @@ type AuthenticateBody = Utilities.TypedRequest<
   { username: string; data: Authenticate.PublicKeyCredentialAssert }
 >;
 
-router.post('/', async (req: AuthenticateBody, res: Response) => {
+router.post("/", async (req: AuthenticateBody, res: Response) => {
   const username = req.body.username;
   const {
     id,
@@ -65,8 +64,8 @@ router.post('/', async (req: AuthenticateBody, res: Response) => {
   } = req.body.data;
   if (!id || !signature || !authenticatorData || !rawId) {
     return res.status(400).json({
-      status: 'Error',
-      message: '缺少必要資訊'
+      status: "Error",
+      message: "缺少必要資訊"
     });
   }
 
@@ -74,32 +73,24 @@ router.post('/', async (req: AuthenticateBody, res: Response) => {
   const expectedChallenge = getUserAuthenticationChallenge(username);
 
   // (資料庫操作) 從資料庫中檢查是否包含符合的驗證器
-  const userAuthenticators =
-    getUserRegisteredAuthenticators<AuthenticatorDevice>(username);
+  const userAuthenticators = getUserRegisteredAuthenticators<AuthenticatorDevice>(username);
 
-  const userAuthenticator = userAuthenticators.find(
-    (device) => device.credential_id === id
-  );
+  const userAuthenticator = userAuthenticators.find((device) => device.credential_id === id);
 
   if (!userAuthenticator) {
     return res.status(403).json({
-      status: 'Error',
-      message: 'User is not registered this device'
+      status: "Error",
+      message: "User is not registered this device"
     });
   }
   // 執行驗證
   let verification: VerifiedAuthenticationResponse;
 
   const authenticator = {
-    credentialID: new Uint8Array(
-      Base64Url.decodeBase64Url(userAuthenticator.credential_id)
-    ),
-    credentialPublicKey: new Uint8Array(
-      Base64Url.decodeBase64Url(userAuthenticator.public_key)
-    ),
+    credentialID: new Uint8Array(Base64Url.decodeBase64Url(userAuthenticator.credential_id)),
+    credentialPublicKey: new Uint8Array(Base64Url.decodeBase64Url(userAuthenticator.public_key)),
     counter: userAuthenticator.counter,
-    transports:
-      userAuthenticator.transports as unknown as Common.AuthenticatorTransportFuture[]
+    transports: userAuthenticator.transports as unknown as Common.AuthenticatorTransportFuture[]
   };
 
   try {
@@ -108,7 +99,7 @@ router.post('/', async (req: AuthenticateBody, res: Response) => {
         response: req.body.data,
         expectedChallenge: expectedChallenge.challenge,
         expectedOrigin: [process.env.ORIGIN_WEBSITE as string],
-        expectedType: 'webauthn.get',
+        expectedType: "webauthn.get",
         requireUserVerification: true,
         expectedRPID: process.env.RP_ID as string
       },
@@ -119,7 +110,7 @@ router.post('/', async (req: AuthenticateBody, res: Response) => {
     if (error instanceof Error) {
       return res.status(400).send({ error: error.message });
     }
-    return res.status(400).send({ error: 'Unknown error' });
+    return res.status(400).send({ error: "Unknown error" });
   }
 
   const { verified } = verification;
@@ -136,7 +127,7 @@ router.post('/', async (req: AuthenticateBody, res: Response) => {
 
   if (verified) {
     return res.status(200).json({
-      status: 'Success',
+      status: "Success",
       data: {
         token: uuidv4()
       }
@@ -146,8 +137,8 @@ router.post('/', async (req: AuthenticateBody, res: Response) => {
   clearUserAuthenticationChallenge(username);
 
   return res.status(401).json({
-    status: 'Error',
-    message: '無法登入'
+    status: "Error",
+    message: "無法登入"
   });
 });
 
