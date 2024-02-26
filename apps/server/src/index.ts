@@ -24,6 +24,6 @@ process.on('unhandledRejection', (reason, promise) => {
   // 記錄於 log 上
 });
 
-const port = process.env.PORT || '3310';
+const port = process.env.PORT || '3000';
 const server = https.createServer(options, app);
 server.listen(port);

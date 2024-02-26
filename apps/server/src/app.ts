@@ -4,7 +4,7 @@ import createHttpError from 'http-errors';
 import cookieParser from 'cookie-parser';
 import * as dotenv from 'dotenv';
 
-import db from './db/index';
+import db from './storage/index';
 import registerRouter from './routes/register';
 import authenticationRouter from './routes/authentication';
 

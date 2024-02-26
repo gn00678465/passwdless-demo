@@ -1,4 +1,4 @@
-import db from '../../db/index';
+import db from '../../storage/index';
 
 // register
 export function getUserRegisteredAuthenticators<T>(username: string): T[] {
