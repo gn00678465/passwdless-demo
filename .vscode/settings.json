@@ -1,0 +1,11 @@
+{
+  "editor.formatOnSave": true,
+  "notebook.formatOnSave.enabled": true,
+  "errorLens.onSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "prettier.configPath": ".prettierrc.yaml",
+  "prettier.bracketSameLine": true,
+  "emmet.triggerExpansionOnTab": true,
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.tsserver.log": "verbose"
+}
