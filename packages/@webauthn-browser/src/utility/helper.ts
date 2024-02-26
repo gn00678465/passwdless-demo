@@ -1,4 +1,4 @@
-export function createPublicKeyVerification(publicKeyCredential: Credential | null) {
+export function createCredentialVerification(publicKeyCredential: Credential | null) {
   if (!(publicKeyCredential instanceof PublicKeyCredential)) {
     throw new TypeError("Unexpected PublicKeyCredential type");
   }
@@ -9,7 +9,7 @@ export function createPublicKeyVerification(publicKeyCredential: Credential | nu
   return true;
 }
 
-export function getPublicKeyVerification(publicKeyCredential: Credential | null) {
+export function getCredentialVerification(publicKeyCredential: Credential | null) {
   if (!(publicKeyCredential instanceof PublicKeyCredential)) {
     throw new TypeError("Unexpected PublicKeyCredential type");
   }

@@ -1,4 +1,4 @@
-import { createPublicKeyVerification, getPublicKeyVerification } from "./utility";
+import { createCredentialVerification, getCredentialVerification } from "./utility";
 import type { PublicKeyOptions, GetPublicKeyOptions } from "./types";
 
 /**
@@ -38,7 +38,7 @@ export async function isCMA(): Promise<boolean> {
  * @param {PublicKeyCredentialCreationOptions} publicKey
  * @returns {Promise<PublicKeyCredential | null>}
  */
-export async function createPublicKey(
+export async function createCredential(
   publicKey: PublicKeyCredentialCreationOptions,
   options: PublicKeyOptions = {}
 ): Promise<PublicKeyCredential | null> {
@@ -47,7 +47,7 @@ export async function createPublicKey(
     signal: options?.signal ?? undefined
   });
 
-  if (!createPublicKeyVerification(publicKeyCredential) || !publicKeyCredential) return null;
+  if (!createCredentialVerification(publicKeyCredential) || !publicKeyCredential) return null;
 
   return publicKeyCredential as PublicKeyCredential;
 }
@@ -57,7 +57,7 @@ export async function createPublicKey(
  * @param {PublicKeyCredentialRequestOptions} publicKey
  * @returns {Promise<PublicKeyCredential | null>}
  */
-export async function getPublicKey(
+export async function getCredential(
   publicKey: PublicKeyCredentialRequestOptions,
   options: GetPublicKeyOptions = {}
 ): Promise<PublicKeyCredential | null> {
@@ -67,7 +67,7 @@ export async function getPublicKey(
     mediation: options?.mediation ?? undefined
   });
 
-  if (!getPublicKeyVerification(publicKeyCredential) || !publicKeyCredential) return null;
+  if (!getCredentialVerification(publicKeyCredential) || !publicKeyCredential) return null;
 
   return publicKeyCredential as PublicKeyCredential;
 }
@@ -81,7 +81,7 @@ export async function getConditionalPublicKey(
   publicKey: PublicKeyCredentialRequestOptions,
   options: PublicKeyOptions = {}
 ): Promise<PublicKeyCredential | null> {
-  return getPublicKey(publicKey, {
+  return getCredential(publicKey, {
     signal: options?.signal ?? undefined,
     mediation: "conditional"
   });
