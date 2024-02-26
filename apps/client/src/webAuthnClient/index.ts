@@ -1,8 +1,5 @@
-import { Base64Url } from '../utils';
-import {
-  PublicKeyCredentialAttestation,
-  PublicKeyCredentialAssert
-} from './types';
+import { Base64Url } from "../utils";
+import { PublicKeyCredentialAttestation, PublicKeyCredentialAssert } from "./types";
 
 export default class WebAuthnClient {
   constructor() {}
@@ -24,12 +21,8 @@ export default class WebAuthnClient {
     if (!(publicKeyCredential instanceof PublicKeyCredential)) {
       throw new TypeError();
     }
-    if (
-      !(
-        publicKeyCredential.response instanceof AuthenticatorAttestationResponse
-      )
-    ) {
-      throw new TypeError('Unexpected attestation response');
+    if (!(publicKeyCredential.response instanceof AuthenticatorAttestationResponse)) {
+      throw new TypeError("Unexpected attestation response");
     }
 
     return publicKeyCredential as PublicKeyCredential;
@@ -80,18 +73,18 @@ export class PublicKeyOptions {
       },
       user: this.user,
       pubKeyCredParams: [
-        { alg: -7, type: 'public-key' },
-        { alg: -257, type: 'public-key' }
+        { alg: -7, type: "public-key" },
+        { alg: -257, type: "public-key" }
       ],
       timeout: this.options?.timeout ?? 60000,
       excludeCredentials: this.options?.excludeCredentials,
       authenticatorSelection: {
-        userVerification: this.options?.userVerification ?? 'required',
-        residentKey: this.options?.discoverable ?? 'preferred',
-        requireResidentKey: this.options?.discoverable === 'required',
+        userVerification: this.options?.userVerification ?? "required",
+        residentKey: this.options?.discoverable ?? "preferred",
+        requireResidentKey: this.options?.discoverable === "required",
         authenticatorAttachment: this.options?.authenticatorAttachment
       },
-      attestation: this.options?.attestation ?? 'indirect'
+      attestation: this.options?.attestation ?? "indirect"
     };
   }
 }
@@ -100,10 +93,7 @@ export class PublicKeyOptions {
 export class PublicKeyRequestOptions {
   challenge: string;
   options: WebAuthnClientType.AuthenticateOptions;
-  constructor(
-    challenge: string,
-    options?: WebAuthnClientType.AuthenticateOptions
-  ) {
+  constructor(challenge: string, options?: WebAuthnClientType.AuthenticateOptions) {
     this.challenge = challenge;
     this.options = options ?? {};
   }
@@ -114,7 +104,26 @@ export class PublicKeyRequestOptions {
       rpId: window.location.hostname,
       allowCredentials: this.options?.allowCredentials ?? [],
       timeout: this.options?.timeout ?? 60000,
-      userVerification: this.options?.userVerification ?? 'required'
+      userVerification: this.options?.userVerification ?? "required"
+    };
+  }
+}
+
+// 產生為 passkey credential
+export class ConditionalPublicKeyRequestOptions {
+  challenge: string;
+  options: WebAuthnClientType.AuthenticateOptions;
+  constructor(challenge: string, options?: WebAuthnClientType.AuthenticateOptions) {
+    this.challenge = challenge;
+    this.options = options ?? {};
+  }
+
+  get publicKeyRequestOptions(): PublicKeyCredentialRequestOptions {
+    return {
+      challenge: Base64Url.decodeBase64Url(this.challenge),
+      rpId: window.location.hostname,
+      allowCredentials: this.options?.allowCredentials ?? [],
+      userVerification: this.options?.userVerification ?? "required"
     };
   }
 }
@@ -146,17 +155,11 @@ export class PublicKeyCredentialAttestationAdapter {
       authenticatorAttachment: instance.authenticatorAttachment,
       response: {
         publicKey: Base64Url.encodeBase64Url(publicKey),
-        authenticatorData: Base64Url.encodeBase64Url(
-          instance.response.getAuthenticatorData()
-        ),
-        clientDataJSON: Base64Url.encodeBase64Url(
-          instance.response.clientDataJSON
-        ),
+        authenticatorData: Base64Url.encodeBase64Url(instance.response.getAuthenticatorData()),
+        clientDataJSON: Base64Url.encodeBase64Url(instance.response.clientDataJSON),
         transports: instance.response.getTransports(),
         publicKeyAlgorithm: instance.response.getPublicKeyAlgorithm(),
-        attestationObject: Base64Url.encodeBase64Url(
-          instance.response.attestationObject
-        )
+        attestationObject: Base64Url.encodeBase64Url(instance.response.attestationObject)
       },
       clientExtensionResults: instance.clientExtensionResults,
       type: instance.type
@@ -166,7 +169,7 @@ export class PublicKeyCredentialAttestationAdapter {
   toJson() {
     const publicKey = this.response.getPublicKey();
     if (!publicKey) {
-      throw new Error('Could not retrieve public key');
+      throw new Error("Could not retrieve public key");
     }
     return this.#toAttestationJson(this, publicKey);
   }
@@ -191,23 +194,16 @@ export class PublicKeyCredentialAssertionAdapter {
     return this.#toAssertionJson(this);
   }
 
-  #toAssertionJson(
-    instance: PublicKeyCredentialAssertionAdapter
-  ): PublicKeyCredentialAssert {
+  #toAssertionJson(instance: PublicKeyCredentialAssertionAdapter): PublicKeyCredentialAssert {
     return {
       id: instance.id,
       rawId: Base64Url.encodeBase64Url(instance.rawId),
       response: {
-        clientDataJSON: Base64Url.encodeBase64Url(
-          instance.response.clientDataJSON
-        ),
+        clientDataJSON: Base64Url.encodeBase64Url(instance.response.clientDataJSON),
         signature: Base64Url.encodeBase64Url(instance.response.signature),
         userHandle:
-          instance.response.userHandle &&
-          Base64Url.encodeBase64Url(instance.response.userHandle),
-        authenticatorData: Base64Url.encodeBase64Url(
-          instance.response.authenticatorData
-        )
+          instance.response.userHandle && Base64Url.encodeBase64Url(instance.response.userHandle),
+        authenticatorData: Base64Url.encodeBase64Url(instance.response.authenticatorData)
       },
       type: instance.type,
       authenticatorAttachment: instance.authenticatorAttachment
@@ -215,4 +211,4 @@ export class PublicKeyCredentialAssertionAdapter {
   }
 }
 
-export * from './types';
+export * from "./types";
