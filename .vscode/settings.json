@@ -7,5 +7,6 @@
   "prettier.bracketSameLine": true,
   "emmet.triggerExpansionOnTab": true,
   "typescript.tsdk": "node_modules/typescript/lib",
-  "typescript.tsserver.log": "verbose"
+  "typescript.tsserver.log": "verbose",
+  "workbench.tree.enableStickyScroll": true
 }
