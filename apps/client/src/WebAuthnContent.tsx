@@ -128,7 +128,10 @@ export default function WebAuthnContext() {
         switchMap((assert) => {
           console.log(assert);
           if (assert) {
-            return postPasskeysSignature(new PublicKeyCredentialAssertionAdapter(assert).toJson());
+            return postAuthSignature(
+              name,
+              new PublicKeyCredentialAssertionAdapter(assert).toJson()
+            );
           }
           throw new Error("認證錯誤");
         })
@@ -170,8 +173,7 @@ export default function WebAuthnContext() {
           switchMap((assert) => {
             console.log(assert);
             if (assert) {
-              return postAuthSignature(
-                name,
+              return postPasskeysSignature(
                 new PublicKeyCredentialAssertionAdapter(assert).toJson()
               );
             }
