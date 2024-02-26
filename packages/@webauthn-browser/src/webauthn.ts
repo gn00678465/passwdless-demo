@@ -77,7 +77,7 @@ export async function getCredential(
  * @param {PublicKeyCredentialRequestOptions} publicKey
  * @returns {Promise<PublicKeyCredential | null>}
  */
-export async function getConditionalPublicKey(
+export async function getConditionalCredential(
   publicKey: PublicKeyCredentialRequestOptions,
   options: PublicKeyOptions = {}
 ): Promise<PublicKeyCredential | null> {
