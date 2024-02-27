@@ -33,6 +33,7 @@ router.post("/options", async (req: Request, res: Response) => {
   }
   const options = {
     challenge: uuidv4(),
+    rpId: process.env.RP_ID,
     allowCredentials: userAuthenticators.map((authenticator) => ({
       id: authenticator.credential_id,
       type: "public-key",

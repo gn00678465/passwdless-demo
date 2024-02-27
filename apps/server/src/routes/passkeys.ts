@@ -18,6 +18,7 @@ router.post("/login", async (req: Request, res: Response) => {
   const options = {
     challenge: uuidv4(),
     allowCredentials: [],
+    rpId: process.env.RP_ID,
     extensions: {}
   };
 
