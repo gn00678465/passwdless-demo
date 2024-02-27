@@ -1,0 +1,15 @@
+{
+  "name": "@webauthn/server",
+  "private": true,
+  "version": "1.0.0",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "typesVersions": {
+    "*": {
+      "*": [
+        "./src/*"
+      ]
+    }
+  }
+}
