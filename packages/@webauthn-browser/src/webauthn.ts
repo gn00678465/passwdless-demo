@@ -58,7 +58,7 @@ export async function createCredential(
  * @returns {Promise<PublicKeyCredential | null>}
  */
 export async function getSignature(
-  publicKey: PublicKeyCredentialCreationOptions | undefined,
+  publicKey: PublicKeyCredentialRequestOptions | undefined,
   options: GetSignatureOptions = {}
 ): Promise<PublicKeyCredential | null> {
   const credential = await navigator.credentials.get({

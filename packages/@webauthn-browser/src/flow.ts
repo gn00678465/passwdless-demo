@@ -10,7 +10,7 @@ export async function webauthnRegistration<TR>(options: WebauthnRegistrationOpti
   try {
     const options = await getPublicKeyCreationOptions();
     const credential = await createCredential(options, { signal });
-    const result = await sendSignedChallenge(credential);
+    const result = credential ? await sendSignedChallenge(credential) : null;
     opts?.onSuccess?.(result);
   } catch (error) {
     opts?.onError?.(error);
@@ -28,7 +28,7 @@ export async function webauthnAuthentication<TR>(options: WebauthnAuthentication
   try {
     const options = await getPublicKeyRequestOptions();
     const credential = await getSignature(options, { signal });
-    const result = await sendSignedChallenge(credential);
+    const result = credential ? await sendSignedChallenge(credential) : null;
     opts?.onSuccess?.(result);
   } catch (error) {
     opts?.onError?.(error);
@@ -42,7 +42,7 @@ export async function passkeysAuthentication<TR>(options: WebauthnAuthentication
   try {
     const options = await getPublicKeyRequestOptions();
     const credential = await getSignature(options, { signal, mediation: "conditional" });
-    const result = await sendSignedChallenge(credential);
+    const result = credential ? await sendSignedChallenge(credential) : null;
     opts?.onSuccess?.(result);
   } catch (error) {
     opts?.onError?.(error);
