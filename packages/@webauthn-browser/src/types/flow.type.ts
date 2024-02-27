@@ -1,17 +1,17 @@
 import type { CreateCredentialOptions } from "./webauthn.type";
 
-interface CommonOptions extends CreateCredentialOptions {
+interface CommonOptions<TR> extends CreateCredentialOptions {
   onError?: (error: unknown) => void;
-  onSuccess?: <T>(arg: T) => void;
+  onSuccess?: (arg?: TR) => void;
   onComplete?: () => void;
 }
 
-export interface WebauthnRegistrationOptions extends CommonOptions {
+export interface WebauthnRegistrationOptions<TR> extends CommonOptions<TR> {
   getPublicKeyCreationOptions: () => Promise<PublicKeyCredentialCreationOptions | undefined>;
-  sendSignedChallenge: <T>(arg: PublicKeyCredential | null) => Promise<T>;
+  sendSignedChallenge: (arg: PublicKeyCredential | null) => Promise<TR>;
 }
 
-export interface WebauthnAuthenticationOptions extends CommonOptions {
-  getPublicKeyRequestOptions: () => Promise<PublicKeyCredentialCreationOptions | undefined>;
-  sendSignedChallenge: <T>(arg: PublicKeyCredential | null) => Promise<T>;
+export interface WebauthnAuthenticationOptions<TR> extends CommonOptions<TR> {
+  getPublicKeyRequestOptions: () => Promise<PublicKeyCredentialRequestOptions | undefined>;
+  sendSignedChallenge: (arg: PublicKeyCredential | null) => Promise<TR>;
 }
