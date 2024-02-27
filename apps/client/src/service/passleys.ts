@@ -11,6 +11,6 @@ export async function fetchPasskeysOptions() {
   >("/api/v1/passkeys/login");
 }
 
-export async function postPasskeysSignature(data: PublicKeyCredentialAssert) {
+export async function sendPasskeysSignature(data: PublicKeyCredentialAssert) {
   return request.put("/api/v1/passkeys/login", { data });
 }

@@ -5,7 +5,7 @@ declare namespace Service {
     rpName: string;
     excludeCredentials: {
       id: string;
-      type: 'public-key';
+      type: "public-key";
       transports: string[];
     }[];
   }
@@ -14,13 +14,14 @@ declare namespace Service {
     challenge: string;
     allowCredentials: {
       id: string;
-      type: 'public-key';
+      type: "public-key";
       transports: string[];
     }[];
+    rpId: string;
   }
 
   interface SuccessfulResponse<T> {
-    status: 'Success';
+    status: "Success";
     data: T;
   }
 }

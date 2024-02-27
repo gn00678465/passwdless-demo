@@ -15,29 +15,15 @@ import {
 import { useNavigate, useLoaderData, Link } from "react-router-dom";
 import { of, switchMap } from "rxjs";
 import { AxiosError } from "axios";
-// import {
-//   isCMA,
-//   isLocalAuthenticator,
-//   createCredential,
-//   getCredential,
-//   getConditionalCredential
-// } from "@webauthn/browser";
 
-import WebAuthnClient, {
-  PublicKeyOptions,
-  PublicKeyCredentialAttestationAdapter,
-  PublicKeyCredentialAssertionAdapter,
-  PublicKeyRequestOptions,
-  ConditionalPublicKeyRequestOptions
-} from "./webAuthnClient";
-import { fetchRegisterOptions, postRegister } from "./service/register";
+import WebAuthnClient from "./webAuthnClient";
 import { fetchAuthenticationOptions, postAuthSignature } from "./service/authentication";
-import { fetchPasskeysOptions, postPasskeysSignature } from "./service/passleys";
-import { Base64Url } from "./utils";
+import { Base64Url, PublicKeyCredentialAssertionAdapter, PublicKeyRequestOptions } from "./utils";
 import AdvanceContext from "./AdvanceContent";
+import { useRegistration, usePassKeys } from "./hooks";
 
 export default function WebAuthnContext() {
-  const [name, setName] = useState("");
+  const [field, setField] = useState("");
   const [isAvailable, setIsAvailable] = useState<boolean>(false);
   const navigate = useNavigate();
   const loaderData = useLoaderData() as "login" | "register";
@@ -58,41 +44,17 @@ export default function WebAuthnContext() {
     getAvailable();
   }, []);
 
-  async function register() {
-    try {
-      const {
-        data: {
-          data: { challenge, rpId, rpName, excludeCredentials }
-        }
-      } = await fetchRegisterOptions(name);
-      const publicKeyOptions = new PublicKeyOptions(
-        challenge,
-        {
-          id: crypto.getRandomValues(new Uint8Array(32)),
-          name: name,
-          displayName: name
-        },
-        rpId,
-        rpName,
-        {
-          userVerification: "required",
-          attestation: "direct",
-          authenticatorAttachment: attachment,
-          excludeCredentials: excludeCredentials.map(({ id, ...args }) => {
-            return {
-              id: Base64Url.decodeBase64Url(id),
-              ...args
-            } as PublicKeyCredentialDescriptor;
-          })
-        }
-      ).publicKeyOptions;
-      const credentials = await WebAuthnClient.createPublicKey(publicKeyOptions);
-      console.log(credentials);
-      if (credentials) {
-        await postRegister(name, new PublicKeyCredentialAttestationAdapter(credentials).toJson());
+  const { registrationStart } = useRegistration<{ status: "Success" }>(field, {
+    attachment,
+    onSuccess: (args) => {
+      setField(() => "");
+      if (args?.status === "Success") {
       }
-      setError(() => "");
-    } catch (error) {
+    },
+    onComplete() {
+      setField(() => "");
+    },
+    onError(error) {
       if (error instanceof Error) {
         if (error.name === "InvalidStateError") {
           console.error("InvalidStateError", error.name);
@@ -102,20 +64,18 @@ export default function WebAuthnContext() {
           console.error("NotAllowedError", error.name);
           setError(() => "使用者已取消作業");
         }
-        console.error(error);
       }
-    } finally {
-      setName(() => "");
+      console.error(error);
     }
-  }
+  });
 
   async function authenticating() {
-    of(name)
+    of(null)
       .pipe(
-        switchMap((name) => fetchAuthenticationOptions(name).then((res) => res.data.data)),
+        switchMap(() => fetchAuthenticationOptions(field).then((res) => res.data.data)),
         switchMap(
           async (options) =>
-            new PublicKeyRequestOptions(options.challenge, {
+            new PublicKeyRequestOptions(options.challenge, options.rpId, {
               allowCredentials: options.allowCredentials.map(({ id, ...args }) => {
                 return {
                   id: Base64Url.decodeBase64Url(id),
@@ -129,7 +89,7 @@ export default function WebAuthnContext() {
           console.log(assert);
           if (assert) {
             return postAuthSignature(
-              name,
+              field,
               new PublicKeyCredentialAssertionAdapter(assert).toJson()
             );
           }
@@ -153,10 +113,14 @@ export default function WebAuthnContext() {
           console.log("error", error);
         },
         complete() {
-          setName(() => "");
+          setField(() => "");
         }
       });
   }
+
+  const { passkeysAuthStart, passkeysAuthAbort } = usePassKeys<{ status: "Success" }>({
+    attachment
+  });
 
   function handleChange(_event: React.ChangeEvent<HTMLInputElement>, checked: boolean) {
     setShowAdv(checked);
@@ -185,30 +149,43 @@ export default function WebAuthnContext() {
           </Typography>
           {loaderData === "login" && (
             <Typography variant="h6">
-              No account yet? <Link to="/register">Sign up</Link>
+              No account yet?{" "}
+              <Link
+                to="/register"
+                color="blue"
+              >
+                Sign up
+              </Link>
             </Typography>
           )}
           {loaderData === "register" && (
             <Typography variant="h6">
-              You already have an account? <Link to="/">Log in</Link>
+              You already have an account?{" "}
+              <Link
+                to="/"
+                color="blue"
+              >
+                Log in
+              </Link>
             </Typography>
           )}
           <TextField
-            label="Name"
+            label="Email"
             autoComplete={
               loaderData === "login"
-                ? "username webauthn"
+                ? "email webauthn"
                 : loaderData === "register"
-                  ? "username"
+                  ? "email"
                   : undefined
             }
-            variant="filled"
-            size="small"
+            variant="outlined"
+            type="email"
+            size="medium"
             fullWidth
-            value={name}
+            value={field}
             sx={{ mt: 3 }}
             onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-              setName(event.target.value);
+              setField(event.target.value);
             }}
           />
           {error && (
@@ -233,8 +210,8 @@ export default function WebAuthnContext() {
                   variant="contained"
                   fullWidth
                   onClick={async () => {
-                    if (name === "") return;
-                    await register();
+                    if (field === "") return;
+                    await registrationStart();
                   }}
                 >
                   Register
@@ -255,7 +232,7 @@ export default function WebAuthnContext() {
                     variant="contained"
                     fullWidth
                     onClick={async () => {
-                      // await passkeyLogin();
+                      await passkeysAuthStart();
                     }}
                   >
                     Passkeys
