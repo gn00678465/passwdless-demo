@@ -1,7 +1,8 @@
-export interface PublicKeyOptions {
+export interface CreateCredentialOptions {
+  /** 中斷請求 */
   signal?: AbortSignal;
 }
 
-export interface GetPublicKeyOptions extends PublicKeyOptions {
+export interface GetSignatureOptions extends CreateCredentialOptions {
   mediation?: CredentialMediationRequirement;
 }
