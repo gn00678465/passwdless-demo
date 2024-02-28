@@ -161,11 +161,24 @@ importers:
       '@types/uuid':
         specifier: ^9.0.7
         version: 9.0.8
+      '@webauthn/server':
+        specifier: workspace:*
+        version: link:../../packages/@webauthn-server
       tsup:
         specifier: ^8.0.1
         version: 8.0.2(postcss@8.4.35)(ts-node@10.9.2)(typescript@5.3.3)
 
   packages/@webauthn-browser: {}
+
+  packages/@webauthn-server:
+    dependencies:
+      base64-arraybuffer-es6:
+        specifier: ^3.1.0
+        version: 3.1.0
+    devDependencies:
+      '@types/node':
+        specifier: ^20.9.3
+        version: 20.11.20
 
   packages/unocss-config: {}
 
@@ -2135,6 +2148,11 @@ packages:
   /balanced-match@1.0.2:
     resolution: {integrity: sha512-3oSeUO0TMV67hN1AmbXsK4yaqU7tjiHlbxRDZOpH0KW9+CeX4bRAaX0Anxt0tx2MrpRpWwQaPwIlISEJhYU5Pw==}
     dev: true
+
+  /base64-arraybuffer-es6@3.1.0:
+    resolution: {integrity: sha512-QKKtftiSrKjilihGNLXxnrb9LJj7rnEdB1cYAqVpekFy0tisDklAf1RAgvpm0HsGYx9sv7FUbgpsrfwTyCPVLg==}
+    engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
+    dev: false
 
   /base64-js@1.5.1:
     resolution: {integrity: sha512-AKpaYlHn8t4SVbOHCy+b5+KKgvR4vrsD8vbvrbiQJps7fKDTkjkDry6ji0rUJjC0kzbNePLwzxq8iypo41qeWA==}

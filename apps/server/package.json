@@ -34,6 +34,7 @@
     "@types/cors": "^2.8.17",
     "@types/http-errors": "^2.0.4",
     "@types/uuid": "^9.0.7",
-    "tsup": "^8.0.1"
+    "tsup": "^8.0.1",
+    "@webauthn/server": "workspace:*"
   }
 }

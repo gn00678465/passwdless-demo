@@ -12,6 +12,8 @@ import {
 import { AuthenticatorDevice } from "./types";
 import { verifyAuthenticationResponseAdapter } from "../controllers/adapter/authentication";
 
+import { decodeClientDataJSON, decodeUserHandle } from "@webauthn/server";
+
 const router = express.Router();
 
 router.post("/login", async (req: Request, res: Response) => {
@@ -43,6 +45,8 @@ router.put("/login", async (req: Request, res: Response) => {
       message: "缺少必要資訊"
     });
   }
+
+  console.log("🚀 ~ router.put ~ userHandle:", userHandle);
 
   res.status(200).json({
     status: "Success",
