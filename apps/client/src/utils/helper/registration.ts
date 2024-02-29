@@ -10,7 +10,7 @@ import { Base64Url } from "../base64";
 export class PublicKeyCredentialCreationOptionsTransform {
   challenge: string;
   user: FetchedPublicKeyCredentialUserEntity;
-  excludeCredentials: FetchedPublicKeyCredentialDescriptor[];
+  excludeCredentials?: FetchedPublicKeyCredentialDescriptor[];
 
   opts: Omit<PublicKeyCredentialCreationOptions, OmitPublicKeyCredentialCreationOptions>;
   constructor({
@@ -32,7 +32,7 @@ export class PublicKeyCredentialCreationOptionsTransform {
         ...this.user,
         id: Base64Url.decodeBase64Url(this.user.id)
       },
-      excludeCredentials: this.excludeCredentials.map((credential) => ({
+      excludeCredentials: this.excludeCredentials?.map((credential) => ({
         id: Base64Url.decodeBase64Url(credential.id),
         type: credential.type,
         transports: credential.transports

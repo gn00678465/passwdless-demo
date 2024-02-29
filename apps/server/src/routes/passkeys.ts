@@ -1,57 +1,89 @@
-import express, { Request, Response } from "express";
-import { v4 as uuidv4 } from "uuid";
-import { VerifiedAuthenticationResponse } from "@simplewebauthn/server";
-
-import { Base64Url, concatArrayBuffers, sha256 } from "../utils";
+import express, { Request, Response, NextFunction } from "express";
 import {
-  getUserRegisteredAuthenticators,
-  saveUserAuthenticationChallenge,
-  getUserAuthenticationChallenge,
-  clearUserAuthenticationChallenge
-} from "../controllers/database/database";
-import { AuthenticatorDevice } from "./types";
-import { verifyAuthenticationResponseAdapter } from "../controllers/adapter/authentication";
+  generateAuthenticationOptions,
+  verifyAuthenticationResponse
+} from "@simplewebauthn/server";
+import type { GenerateAuthenticationOptionsOpts } from "@simplewebauthn/server";
 
-import { decodeClientDataJSON, decodeUserHandle } from "@webauthn/server";
+import {
+  TypedRequestBody,
+  PublicKeyCredentialDescriptorFuture,
+  AuthenticatorTransportFuture
+} from "../types";
+import { CustomError } from "../middleware";
+import { userService, credentialService } from "../service";
+import { uint8ArrayToBase64, base64ToUint8Array, Base64Url } from "../utils";
 
 const router = express.Router();
 
-router.post("/login", async (req: Request, res: Response) => {
-  const options = {
-    challenge: uuidv4(),
+const handlePasskeysStart = async (req: Request, res: Response, next: NextFunction) => {
+  const opts: GenerateAuthenticationOptionsOpts = {
+    userVerification: "preferred",
     allowCredentials: [],
-    rpId: process.env.RP_ID,
-    extensions: {}
+    rpID: process.env.RP_ID
   };
+
+  const options = await generateAuthenticationOptions(opts);
+
+  req.session.currentChallenge = options.challenge;
 
   res.status(200).json({
     status: "Success",
     data: options
   });
-});
+};
 
-router.put("/login", async (req: Request, res: Response) => {
-  const {
-    id,
-    rawId,
-    authenticatorAttachment,
-    type,
-    response: { clientDataJSON, authenticatorData, signature, userHandle }
-  } = req.body.data;
+const handlePasskeysFinish = async (req: Request, res: Response, next: NextFunction) => {
+  const { currentChallenge } = req.session;
 
-  if (!id || !signature || !authenticatorData || !rawId) {
-    return res.status(400).json({
-      status: "Error",
-      message: "缺少必要資訊"
-    });
+  if (!currentChallenge) {
+    return next(new CustomError("Current challenge is missing", 400));
   }
 
-  console.log("🚀 ~ router.put ~ userHandle:", userHandle);
+  try {
+    const { data = undefined } = req.body;
 
-  res.status(200).json({
-    status: "Success",
-    data: req.body.data
-  });
-});
+    if (!data) {
+      return next(new CustomError("缺少必要資訊", 403));
+    }
+
+    const authenticator = await credentialService.getCredentialByCredentialId(data.id);
+    if (!authenticator) {
+      return next(new CustomError("User is not registered this device", 403));
+    }
+
+    const verification = await verifyAuthenticationResponse({
+      response: data as any,
+      expectedChallenge: currentChallenge,
+      expectedOrigin: String(req.headers.origin),
+      expectedRPID: process.env.RP_ID,
+      authenticator: {
+        credentialID: base64ToUint8Array(authenticator.credential_id),
+        credentialPublicKey: base64ToUint8Array(authenticator.public_key),
+        counter: authenticator.counter,
+        transports: JSON.parse(authenticator.transports)
+      },
+      requireUserVerification: true
+    });
+
+    if (verification.verified && verification.authenticationInfo) {
+    } else {
+      next(new CustomError("Verification failed", 400));
+    }
+
+    res.status(200).json({
+      status: "Success",
+      data: {}
+    });
+  } catch (error) {
+    next(error instanceof CustomError ? error : new CustomError("Internal Server Error", 500));
+  } finally {
+    req.session.currentChallenge = undefined;
+  }
+};
+
+router.post("/passkeys", handlePasskeysStart);
+
+router.put("/passkeys", handlePasskeysFinish);
 
 export default router;

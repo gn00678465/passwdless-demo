@@ -1,4 +1,4 @@
-import express, { Request, Response, NextFunction } from "express";
+import express, { Response, NextFunction } from "express";
 import { generateRegistrationOptions, verifyRegistrationResponse } from "@simplewebauthn/server";
 import type { GenerateRegistrationOptionsOpts } from "@simplewebauthn/server";
 
@@ -40,7 +40,6 @@ const handleRegisterStart = async (
         transports: JSON.parse(credential.transports) as AuthenticatorTransportFuture[]
       } as PublicKeyCredentialDescriptorFuture;
     });
-
     const opts: GenerateRegistrationOptionsOpts = {
       rpName: String(process.env.RP_NAME),
       rpID: String(process.env.RP_ID),
@@ -91,7 +90,6 @@ const handleRegisterFinish = async (
 
   try {
     const { data = undefined } = req.body;
-
     if (!data) {
       return next(new CustomError("缺少必要資訊", 403));
     }
@@ -109,18 +107,18 @@ const handleRegisterFinish = async (
 
       const credentialInfo = await credentialService.saveNewCredential(
         loggedInUserId,
-        uint8ArrayToBase64(credentialID),
-        uint8ArrayToBase64(credentialPublicKey),
+        Base64Url.encodeBase64Url(credentialID),
+        Base64Url.encodeBase64Url(credentialPublicKey),
         counter,
         JSON.stringify(data.response.transports)
       );
-
-      const { username } = await userService.getUserById(loggedInUserId);
+      const { username, id } = await userService.getUserById(loggedInUserId);
 
       res.status(200).json({
         status: "Success",
         data: {
           username,
+          userId: id,
           ...credentialInfo
         }
       });

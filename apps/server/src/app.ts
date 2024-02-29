@@ -7,7 +7,6 @@ import session from "express-session";
 import memorystore from "memorystore";
 
 import db from "./storage/index";
-import registerRouter from "./routes/register";
 import authenticationRouter from "./routes/authentication";
 import passkeysRouter from "./routes/passkeys";
 import registrationRouter from "./routes/registration";
@@ -43,10 +42,9 @@ app.use(
 );
 
 // router
-app.use("/api/v1/register", registerRouter);
-app.use("/api/v1/authentication", authenticationRouter);
-app.use("/api/v1/passkeys", passkeysRouter);
 app.use("/api/v1/webauthn", registrationRouter);
+app.use("/api/v1/authentication", authenticationRouter);
+app.use("/api/v1/webauthn", passkeysRouter);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {

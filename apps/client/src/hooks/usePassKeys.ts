@@ -7,8 +7,12 @@ import {
   passkeysAuthentication,
   WebauthnAuthenticationOptions
 } from "@webauthn/browser";
-import { fetchPasskeysOptions, sendPasskeysSignature } from "../service/passleys";
-import { PublicKeyRequestOptions, Base64Url, PublicKeyCredentialAssertionAdapter } from "../utils";
+import { startPasskey, finishPasskey } from "../service/passleys";
+import {
+  Base64Url,
+  PublicKeyCredentialAssertionAdapter,
+  PublicKeyCredentialRequestOptionsTransform
+} from "../utils";
 
 export interface UsePassKeysOptions<TR>
   extends Pick<WebauthnAuthenticationOptions<TR>, "onSuccess" | "onComplete" | "onError"> {
@@ -29,24 +33,12 @@ export function usePassKeys<TR = unknown>({
       signal: abortController.current?.signal,
       getPublicKeyRequestOptions: async () => {
         abortController.current = new AbortController();
-        const {
-          data: {
-            data: { challenge, rpId, allowCredentials }
-          }
-        } = await fetchPasskeysOptions();
-        const credential = new PublicKeyRequestOptions(challenge, rpId, {
-          allowCredentials: allowCredentials.map(({ id, ...args }) => {
-            return {
-              id: Base64Url.decodeBase64Url(id),
-              ...args
-            } as PublicKeyCredentialDescriptor;
-          })
-        }).publicKeyRequestOptions;
-        return credential;
+        const res = await startPasskey();
+        return new PublicKeyCredentialRequestOptionsTransform(res.data.data).options;
       },
       sendSignedChallenge: async (credential) => {
         if (credential) {
-          const res = await sendPasskeysSignature(
+          const res = await finishPasskey(
             new PublicKeyCredentialAssertionAdapter(credential).toJson()
           );
           return res.data;

@@ -1,6 +1,6 @@
 import Database from "better-sqlite3";
 
-const db = new Database(process.env.NODE_ENV === "development" ? "db.db" : "db/db.db", {
+const db = new Database("db.db", {
   verbose: process.env.NODE_ENV !== "production" ? console.log : undefined
 });
 

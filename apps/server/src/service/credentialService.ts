@@ -45,7 +45,7 @@ export const credentialService = {
   async getCredentialByCredentialId(credentialId: string) {
     try {
       const stmt = db.prepare<[string]>("SELECT * FROM credentials WHERE credential_id = ?");
-      return (stmt.all(credentialId) || []) as CredentialInfo[];
+      return stmt.get(credentialId) as CredentialInfo;
     } catch (error) {
       console.error("Error retrieving credential:", error);
       throw error;
