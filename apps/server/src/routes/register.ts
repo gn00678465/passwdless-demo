@@ -1,17 +1,17 @@
-import express, { Request, Response } from 'express';
-import { v4 as uuidv4 } from 'uuid';
-import { VerifiedRegistrationResponse } from '@simplewebauthn/server';
+import express, { Request, Response } from "express";
+import { v4 as uuidv4 } from "uuid";
+import { VerifiedRegistrationResponse } from "@simplewebauthn/server";
 
-import { AuthenticatorDevice } from './types';
+import { AuthenticatorDevice } from "./types";
 import {
   getUserRegisteredAuthenticators,
   saveUserRegisterChallenge,
   getUserRegisterChallenge,
   clearUserRegisterChallenge,
   registerUserAuthenticator
-} from '../controllers/database/database';
-import { verifyRegistrationResponseAdapter } from '../controllers/adapter/register';
-import { Base64Url } from '../utils';
+} from "../controllers/database/database";
+import { verifyRegistrationResponseAdapter } from "../controllers/adapter/register";
+import { Base64Url } from "../utils";
 // import {
 //   verifyRegistrationResponse,
 //   VerifyRegistrationResponseResult
@@ -19,29 +19,28 @@ import { Base64Url } from '../utils';
 
 const router = express.Router();
 
-router.post('/options', (req: Request, res: Response) => {
+router.post("/options", (req: Request, res: Response) => {
   const { username } = req.body;
   if (!username) {
     return res.status(400).json({
-      status: 'Error',
-      message: '請填入使用者名稱'
+      status: "Error",
+      message: "請填入使用者名稱"
     });
   }
-  const userAuthenticators =
-    getUserRegisteredAuthenticators<AuthenticatorDevice>(username);
+  const userAuthenticators = getUserRegisteredAuthenticators<AuthenticatorDevice>(username);
   const options = {
     challenge: uuidv4(),
     rpId: process.env.RP_ID,
     rpName: process.env.RP_NAME,
     excludeCredentials: userAuthenticators.map((authenticator) => ({
       id: authenticator.credential_id,
-      type: 'public-key',
+      type: "public-key",
       transports: JSON.parse(authenticator.transports)
     }))
   };
   saveUserRegisterChallenge(username, options.challenge);
   res.status(200).json({
-    status: 'Success',
+    status: "Success",
     data: {
       ...options
     }
@@ -49,7 +48,7 @@ router.post('/options', (req: Request, res: Response) => {
 });
 
 router.post(
-  '/',
+  "/",
   async (
     req: Utilities.TypedRequest<
       unknown,
@@ -84,8 +83,8 @@ router.post(
       !attestationObject
     ) {
       return res.status(403).json({
-        status: 'Error',
-        message: '缺少必要資訊'
+        status: "Error",
+        message: "缺少必要資訊"
       });
     }
 
@@ -98,16 +97,12 @@ router.post(
         response: req.body.data,
         expectedChallenge: challenge.challenge,
         expectedOrigin: [process.env.ORIGIN_WEBSITE as string],
-        expectedType: 'webauthn.create',
+        expectedType: "webauthn.create",
         requireUserVerification: true
       });
     } catch (err) {
-      return res
-        .status(400)
-        .json({ status: 'Error', message: (err as any).message });
+      return res.status(400).json({ status: "Error", message: (err as any).message });
     }
-
-    console.log(verification);
 
     const { verified, registrationInfo } = verification;
 
@@ -123,11 +118,11 @@ router.post(
       clearUserRegisterChallenge(username);
 
       res.status(200).json({
-        status: 'Success'
+        status: "Success"
       });
     } else {
       res.status(400).json({
-        status: 'Error'
+        status: "Error"
       });
     }
   }
