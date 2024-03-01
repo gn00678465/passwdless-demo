@@ -15,6 +15,7 @@ export default function MainLayout({ children }: Props) {
             variant="h3"
             gutterBottom
             align="center"
+            fontWeight="bold"
           >
             PasswdLess Demo
           </Typography>

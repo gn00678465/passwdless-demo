@@ -2,14 +2,15 @@ import { AxiosResponse } from "axios";
 import { request } from "./request";
 
 import { PublicKeyCredentialAssert } from "../webAuthnClient";
+import type { FatchedPublicKeyCredentialRequestOptions } from "../typings";
 
-export async function fetchAuthenticationOptions(username: string) {
+export async function startAuth(username: string) {
   return request.post<
     string,
-    AxiosResponse<Service.SuccessfulResponse<Service.AuthenticateEntryOptions>>
-  >("/api/v1/authentication/options", { username });
+    AxiosResponse<Service.SuccessfulResponse<FatchedPublicKeyCredentialRequestOptions>>
+  >("/api/v1/webauthn/authentication", { username });
 }
 
-export async function postAuthSignature(name: string, data: PublicKeyCredentialAssert) {
-  return request.post("/api/v1/authentication", { username: name, data });
+export async function finishAuth(data: PublicKeyCredentialAssert) {
+  return request.put("/api/v1/webauthn/authentication", { data });
 }

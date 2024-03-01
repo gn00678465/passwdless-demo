@@ -13,14 +13,11 @@ import {
   CardContent
 } from "@mui/material";
 import { useNavigate, useLoaderData, Link } from "react-router-dom";
-import { of, switchMap } from "rxjs";
-import { AxiosError } from "axios";
 
 import WebAuthnClient from "./webAuthnClient";
-import { fetchAuthenticationOptions, postAuthSignature } from "./service/authentication";
-import { Base64Url, PublicKeyCredentialAssertionAdapter, PublicKeyRequestOptions } from "./utils";
+
 import AdvanceContext from "./AdvanceContent";
-import { useRegistration, usePassKeys } from "./hooks";
+import { useRegistration, usePassKeys, useAuthentication } from "./hooks";
 
 export default function WebAuthnContext() {
   const [field, setField] = useState("");
@@ -69,56 +66,9 @@ export default function WebAuthnContext() {
     }
   });
 
-  async function authenticating() {
-    of(null)
-      .pipe(
-        switchMap(() => fetchAuthenticationOptions(field).then((res) => res.data.data)),
-        switchMap(
-          async (options) =>
-            new PublicKeyRequestOptions(options.challenge, options.rpId, {
-              allowCredentials: options.allowCredentials.map(({ id, ...args }) => {
-                return {
-                  id: Base64Url.decodeBase64Url(id),
-                  ...args
-                } as PublicKeyCredentialDescriptor;
-              })
-            }).publicKeyRequestOptions
-        ),
-        switchMap((assertOpts) => WebAuthnClient.authenticate(assertOpts)),
-        switchMap((assert) => {
-          console.log(assert);
-          if (assert) {
-            return postAuthSignature(
-              field,
-              new PublicKeyCredentialAssertionAdapter(assert).toJson()
-            );
-          }
-          throw new Error("認證錯誤");
-        })
-      )
-      .subscribe({
-        next: (success) => {
-          if (success.status === 200 && success.data.status === "Success") {
-            navigate("/home");
-          }
-        },
-        error(error: AxiosError<Error> | Error) {
-          if (error instanceof Error) {
-            if ("response" in error && "data" in error.response!) {
-              setError(() => error.response?.data.message ?? "Unknown Error");
-              return;
-            }
-            setError(() => error.message ?? "Unknown Error");
-          }
-          console.log("error", error);
-        },
-        complete() {
-          setField(() => "");
-        }
-      });
-  }
+  const { authenticationStart } = useAuthentication<{ status: "Success" }>(field, { attachment });
 
-  const { passkeysAuthStart, passkeysAuthAbort } = usePassKeys<{ status: "Success" }>({
+  const { passkeysAuthStart } = usePassKeys<{ status: "Success" }>({
     attachment
   });
 
@@ -143,12 +93,15 @@ export default function WebAuthnContext() {
           <Typography
             variant="h4"
             mb={1}
-            fontWeight="bold"
+            sx={{ fontWeight: 500 }}
           >
             {capitalizeCase(loaderData)}
           </Typography>
           {loaderData === "login" && (
-            <Typography variant="h6">
+            <Typography
+              variant="h6"
+              sx={{ fontWeight: 400 }}
+            >
               No account yet?{" "}
               <Link
                 to="/register"
@@ -223,7 +176,7 @@ export default function WebAuthnContext() {
                     variant="contained"
                     fullWidth
                     onClick={async () => {
-                      await authenticating();
+                      await authenticationStart();
                     }}
                   >
                     Authenticate

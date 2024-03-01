@@ -9,12 +9,12 @@ export interface UserInfo {
 export const userService = {
   async getUserById(userId: string) {
     const fmt = db.prepare<string[]>("SELECT * FROM users WHERE id = ?");
-    return fmt.get(userId) as UserInfo;
+    return fmt.get(userId) as UserInfo | undefined | null;
   },
 
   async getUserByUsername(username: string) {
     const fmt = db.prepare<string[]>("SELECT * FROM users WHERE username = ?");
-    return fmt.get(username) as UserInfo;
+    return fmt.get(username) as UserInfo | undefined | null;
   },
 
   async createUser(username: string) {

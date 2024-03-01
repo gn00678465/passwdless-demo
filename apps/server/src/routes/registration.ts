@@ -9,7 +9,7 @@ import {
 } from "../types";
 import { CustomError } from "../middleware";
 import { userService, credentialService } from "../service";
-import { uint8ArrayToBase64, Base64Url } from "../utils";
+import { Base64Url } from "../utils";
 
 const router = express.Router();
 
@@ -32,7 +32,7 @@ const handleRegisterStart = async (
       user = await userService.createUser(username);
     }
 
-    const credentials = await credentialService.getCredentialByUserId(user.id);
+    const credentials = await credentialService.getAllCredentialByUserId(user.id);
     const excludeCredentials = credentials.map((credential) => {
       return {
         id: Base64Url.decodeBase64Url(credential.credential_id),
@@ -112,16 +112,21 @@ const handleRegisterFinish = async (
         counter,
         JSON.stringify(data.response.transports)
       );
-      const { username, id } = await userService.getUserById(loggedInUserId);
+      const { username = undefined, id = undefined } =
+        (await userService.getUserById(loggedInUserId)) || {};
 
-      res.status(200).json({
-        status: "Success",
-        data: {
-          username,
-          userId: id,
-          ...credentialInfo
-        }
-      });
+      if (username && id) {
+        res.status(200).json({
+          status: "Success",
+          data: {
+            username,
+            userId: id,
+            ...credentialInfo
+          }
+        });
+      } else {
+        next(new CustomError("User is not exist!", 400));
+      }
     } else {
       next(new CustomError("Verification failed", 400));
     }

@@ -17,20 +17,24 @@ import { uint8ArrayToBase64, base64ToUint8Array, Base64Url } from "../utils";
 const router = express.Router();
 
 const handlePasskeysStart = async (req: Request, res: Response, next: NextFunction) => {
-  const opts: GenerateAuthenticationOptionsOpts = {
-    userVerification: "preferred",
-    allowCredentials: [],
-    rpID: process.env.RP_ID
-  };
+  try {
+    const opts: GenerateAuthenticationOptionsOpts = {
+      userVerification: "preferred",
+      allowCredentials: [],
+      rpID: process.env.RP_ID
+    };
 
-  const options = await generateAuthenticationOptions(opts);
+    const options = await generateAuthenticationOptions(opts);
 
-  req.session.currentChallenge = options.challenge;
+    req.session.currentChallenge = options.challenge;
 
-  res.status(200).json({
-    status: "Success",
-    data: options
-  });
+    res.status(200).json({
+      status: "Success",
+      data: options
+    });
+  } catch (error) {
+    next(error instanceof CustomError ? error : new CustomError("Internal Server Error", 500));
+  }
 };
 
 const handlePasskeysFinish = async (req: Request, res: Response, next: NextFunction) => {

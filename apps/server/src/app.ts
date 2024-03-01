@@ -7,9 +7,9 @@ import session from "express-session";
 import memorystore from "memorystore";
 
 import db from "./storage/index";
+import registrationRouter from "./routes/registration";
 import authenticationRouter from "./routes/authentication";
 import passkeysRouter from "./routes/passkeys";
-import registrationRouter from "./routes/registration";
 
 dotenv.config();
 const app = express();
@@ -43,7 +43,7 @@ app.use(
 
 // router
 app.use("/api/v1/webauthn", registrationRouter);
-app.use("/api/v1/authentication", authenticationRouter);
+app.use("/api/v1/webauthn", authenticationRouter);
 app.use("/api/v1/webauthn", passkeysRouter);
 
 // catch 404 and forward to error handler

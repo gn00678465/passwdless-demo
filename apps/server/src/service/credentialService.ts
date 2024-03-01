@@ -45,13 +45,31 @@ export const credentialService = {
   async getCredentialByCredentialId(credentialId: string) {
     try {
       const stmt = db.prepare<[string]>("SELECT * FROM credentials WHERE credential_id = ?");
-      return stmt.get(credentialId) as CredentialInfo;
+      return stmt.get(credentialId) as CredentialInfo | undefined | null;
+    } catch (error) {
+      console.error("Error retrieving credential:", error);
+      throw error;
+    }
+  },
+  async getAllCredentialByCredentialId(credentialId: string) {
+    try {
+      const stmt = db.prepare<[string]>("SELECT * FROM credentials WHERE credential_id = ?");
+      return (stmt.all(credentialId) || []) as CredentialInfo[];
     } catch (error) {
       console.error("Error retrieving credential:", error);
       throw error;
     }
   },
   async getCredentialByUserId(userId: string) {
+    try {
+      const stmt = db.prepare<[string]>("SELECT * FROM credentials WHERE user_id = ?");
+      return stmt.get(userId) as CredentialInfo | undefined | null;
+    } catch (error) {
+      console.error("Error retrieving credential:", error);
+      throw error;
+    }
+  },
+  async getAllCredentialByUserId(userId: string) {
     try {
       const stmt = db.prepare<[string]>("SELECT * FROM credentials WHERE user_id = ?");
       return (stmt.all(userId) || []) as CredentialInfo[];
