@@ -9,6 +9,7 @@
   "scripts": {
     "@webauthn-browser": "pnpm --filter @webauthn/browser",
     "@webauthn-server": "pnpm --filter @webauthn/server",
+    "@webauthn-types": "pnpm --filter @webauthn/types",
     "passless-client": "pnpm --filter @passless-demo/client",
     "passless-server": "pnpm --filter @passless-demo/server",
     "format": "prettier --write src/",

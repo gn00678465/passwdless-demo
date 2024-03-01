@@ -4,12 +4,9 @@ import {
   verifyAuthenticationResponse
 } from "@simplewebauthn/server";
 import type { GenerateAuthenticationOptionsOpts } from "@simplewebauthn/server";
+import type { AuthenticationResponseJSON } from "@webauthn/types";
 
-import {
-  TypedRequestBody,
-  PublicKeyCredentialDescriptorFuture,
-  AuthenticatorTransportFuture
-} from "../types";
+import { TypedRequestBody } from "../types";
 import { CustomError } from "../middleware";
 import { userService, credentialService } from "../service";
 import { uint8ArrayToBase64, base64ToUint8Array, Base64Url } from "../utils";
@@ -37,7 +34,11 @@ const handlePasskeysStart = async (req: Request, res: Response, next: NextFuncti
   }
 };
 
-const handlePasskeysFinish = async (req: Request, res: Response, next: NextFunction) => {
+type PutPasskeyReqBody = TypedRequestBody<{
+  data: AuthenticationResponseJSON;
+}>;
+
+const handlePasskeysFinish = async (req: PutPasskeyReqBody, res: Response, next: NextFunction) => {
   const { currentChallenge } = req.session;
 
   if (!currentChallenge) {
@@ -57,7 +58,7 @@ const handlePasskeysFinish = async (req: Request, res: Response, next: NextFunct
     }
 
     const verification = await verifyAuthenticationResponse({
-      response: data as any,
+      response: data,
       expectedChallenge: currentChallenge,
       expectedOrigin: String(req.headers.origin),
       expectedRPID: process.env.RP_ID,

@@ -7,18 +7,21 @@ import {
 
 export interface UseRegistrationOptions<TR>
   extends Pick<WebauthnRegistrationOptions<TR>, "onSuccess" | "onComplete" | "onError" | "signal"> {
-  attachment?: WebAuthnClientType.Attachment;
+  attachment?: AuthenticatorAttachment | undefined;
 }
 
 export function useRegistration<TR>(
   name: string,
-  { attachment, signal, onComplete, onSuccess, onError }: UseRegistrationOptions<TR>
+  { signal, onComplete, onSuccess, onError }: UseRegistrationOptions<TR>
 ) {
   async function registrationStart() {
     await webauthnRegistration<TR>({
       getPublicKeyCreationOptions: async () => {
         const res = await startRegister(name);
-        return new PublicKeyCredentialCreationOptionsTransform(res.data.data).options;
+        if (res.data.status === "Success") {
+          return new PublicKeyCredentialCreationOptionsTransform(res.data.data).options;
+        }
+        throw new Error(res.data.message);
       },
       sendSignedChallenge: async (credentials) => {
         if (credentials) {

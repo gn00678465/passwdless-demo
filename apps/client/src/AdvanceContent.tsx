@@ -7,13 +7,13 @@ import Select, { SelectChangeEvent } from "@mui/material/Select";
 
 interface Props {
   children?: ReactNode;
-  attachment: WebAuthnClientType.Attachment;
-  setAttachment: Dispatch<SetStateAction<WebAuthnClientType.Attachment>>;
+  attachment: AuthenticatorAttachment | undefined;
+  setAttachment: Dispatch<SetStateAction<AuthenticatorAttachment | undefined>>;
 }
 
 function AdvanceContext({ attachment, setAttachment }: Props) {
   const handleChange = (event: SelectChangeEvent) => {
-    const value = event.target.value as WebAuthnClientType.Attachment | "both";
+    const value = event.target.value as AuthenticatorAttachment | undefined | "both";
     setAttachment(() => {
       if (value === "both") return undefined;
       return value;

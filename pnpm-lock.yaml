@@ -76,6 +76,9 @@ importers:
       '@webauthn/browser':
         specifier: workspace:*
         version: link:../../packages/@webauthn-browser
+      '@webauthn/types':
+        specifier: workspace:*
+        version: link:../../packages/@webauthb-types
       eslint:
         specifier: ^8.53.0
         version: 8.57.0
@@ -173,9 +176,14 @@ importers:
       '@webauthn/server':
         specifier: workspace:*
         version: link:../../packages/@webauthn-server
+      '@webauthn/types':
+        specifier: workspace:*
+        version: link:../../packages/@webauthb-types
       tsup:
         specifier: ^8.0.1
         version: 8.0.2(postcss@8.4.35)(ts-node@10.9.2)(typescript@5.3.3)
+
+  packages/@webauthb-types: {}
 
   packages/@webauthn-browser: {}
 

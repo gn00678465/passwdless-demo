@@ -1,12 +1,13 @@
 import express, { Response, NextFunction } from "express";
 import { generateRegistrationOptions, verifyRegistrationResponse } from "@simplewebauthn/server";
 import type { GenerateRegistrationOptionsOpts } from "@simplewebauthn/server";
+import type {
+  RegistrationResponseJSON,
+  AuthenticatorTransportFuture,
+  PublicKeyCredentialDescriptorFuture
+} from "@webauthn/types";
 
-import {
-  TypedRequestBody,
-  PublicKeyCredentialDescriptorFuture,
-  AuthenticatorTransportFuture
-} from "../types";
+import { TypedRequestBody } from "../types";
 import { CustomError } from "../middleware";
 import { userService, credentialService } from "../service";
 import { Base64Url } from "../utils";
@@ -70,7 +71,7 @@ const handleRegisterStart = async (
 };
 
 type PutRegistrationReqBody = TypedRequestBody<{
-  data: { id: string; type: string; response: any };
+  data: RegistrationResponseJSON;
 }>;
 
 const handleRegisterFinish = async (
@@ -95,9 +96,9 @@ const handleRegisterFinish = async (
     }
 
     const verification = await verifyRegistrationResponse({
-      response: data as any,
+      response: data,
       expectedChallenge: currentChallenge,
-      expectedOrigin: String(process.env["ORIGIN_WEBSITE"]),
+      expectedOrigin: String(req.headers.origin),
       expectedRPID: process.env.RP_ID,
       requireUserVerification: true
     });

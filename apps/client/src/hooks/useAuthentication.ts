@@ -1,9 +1,7 @@
-import { useRef } from "react";
 import { webauthnAuthentication } from "@webauthn/browser";
 import type { WebauthnAuthenticationOptions } from "@webauthn/browser";
 import { startAuth, finishAuth } from "../service/authentication";
 import {
-  Base64Url,
   PublicKeyCredentialAssertionAdapter,
   PublicKeyCredentialRequestOptionsTransform
 } from "../utils";
@@ -13,18 +11,21 @@ export interface UseAuthenticationOptions<TR>
     WebauthnAuthenticationOptions<TR>,
     "onSuccess" | "onComplete" | "onError" | "signal"
   > {
-  attachment?: WebAuthnClientType.Attachment;
+  attachment?: AuthenticatorAttachment | undefined;
 }
 
 export function useAuthentication<TR>(
   username: string,
-  { attachment, signal, onComplete, onSuccess, onError }: UseAuthenticationOptions<TR>
+  { onComplete, onSuccess, onError }: UseAuthenticationOptions<TR>
 ) {
   async function authenticationStart() {
     await webauthnAuthentication({
       getPublicKeyRequestOptions: async () => {
         const res = await startAuth(username);
-        return new PublicKeyCredentialRequestOptionsTransform(res.data.data).options;
+        if (res.data.status === "Success") {
+          return new PublicKeyCredentialRequestOptionsTransform(res.data.data).options;
+        }
+        throw new Error(res.data.message);
       },
       sendSignedChallenge: async (options) => {
         if (options) {

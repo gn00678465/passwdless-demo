@@ -13,8 +13,7 @@ import {
   CardContent
 } from "@mui/material";
 import { useNavigate, useLoaderData, Link } from "react-router-dom";
-
-import WebAuthnClient from "./webAuthnClient";
+import { isLocalAuthenticator } from "@webauthn/browser";
 
 import AdvanceContext from "./AdvanceContent";
 import { useRegistration, usePassKeys, useAuthentication } from "./hooks";
@@ -26,12 +25,12 @@ export default function WebAuthnContext() {
   const loaderData = useLoaderData() as "login" | "register";
   const [error, setError] = useState("");
   const [showAdv, setShowAdv] = useState(true);
-  const [attachment, setAttachment] = useState<WebAuthnClientType.Attachment>(undefined);
+  const [attachment, setAttachment] = useState<AuthenticatorAttachment | undefined>(undefined);
 
   useEffect(() => {
     async function getAvailable(): Promise<void> {
       try {
-        const res = await WebAuthnClient.isAvailable();
+        const res = await isLocalAuthenticator();
         setIsAvailable(res);
       } catch (err) {
         setIsAvailable(false);
@@ -46,6 +45,7 @@ export default function WebAuthnContext() {
     onSuccess: (args) => {
       setField(() => "");
       if (args?.status === "Success") {
+        navigate("/home");
       }
     },
     onComplete() {
@@ -66,10 +66,48 @@ export default function WebAuthnContext() {
     }
   });
 
-  const { authenticationStart } = useAuthentication<{ status: "Success" }>(field, { attachment });
+  const { authenticationStart } = useAuthentication<{ status: "Success" }>(field, {
+    attachment,
+    onSuccess: (args) => {
+      setField(() => "");
+      if (args?.status === "Success") {
+        navigate("/home");
+      }
+    },
+    onComplete() {
+      setField(() => "");
+    },
+    onError(error) {
+      if (error instanceof Error) {
+        if (error.name === "NotAllowedError") {
+          console.error("NotAllowedError", error.name);
+          setError(() => "使用者已取消作業");
+        }
+      }
+      console.error(error);
+    }
+  });
 
   const { passkeysAuthStart } = usePassKeys<{ status: "Success" }>({
-    attachment
+    attachment,
+    onSuccess: (args) => {
+      setField(() => "");
+      if (args?.status === "Success") {
+        navigate("/home");
+      }
+    },
+    onComplete() {
+      setField(() => "");
+    },
+    onError(error) {
+      if (error instanceof Error) {
+        if (error.name === "NotAllowedError") {
+          console.error("NotAllowedError", error.name);
+          setError(() => "使用者已取消作業");
+        }
+      }
+      console.error(error);
+    }
   });
 
   function handleChange(_event: React.ChangeEvent<HTMLInputElement>, checked: boolean) {

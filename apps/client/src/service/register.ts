@@ -1,18 +1,18 @@
 import type { AxiosResponse } from "axios";
 
 import { request } from "./request";
-import { PublicKeyCredentialAttestation } from "../webAuthnClient";
-import { FetchedPublicKeyCredentialCreationOptions } from "../typings";
+import { FetchedPublicKeyCredentialCreationOptions, ServiceResponse } from "../typings";
+import type { RegistrationResponseJSON } from "@webauthn/types";
 
 export async function startRegister(username: string) {
   return request.post<
     string,
-    AxiosResponse<Service.SuccessfulResponse<FetchedPublicKeyCredentialCreationOptions>>
+    AxiosResponse<ServiceResponse<FetchedPublicKeyCredentialCreationOptions>>
   >("/api/v1/webauthn/registration", {
     username: username
   });
 }
 
-export async function finishRegister(data: PublicKeyCredentialAttestation) {
+export async function finishRegister(data: RegistrationResponseJSON) {
   return request.put<string, AxiosResponse<any>>("/api/v1/webauthn/registration", { data });
 }

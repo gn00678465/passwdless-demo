@@ -1,16 +1,16 @@
 import type { AxiosResponse } from "axios";
 import { request } from "./request";
 
-import { PublicKeyCredentialAssert } from "../webAuthnClient";
-import type { FatchedPublicKeyCredentialRequestOptions } from "../typings";
+import type { FatchedPublicKeyCredentialRequestOptions, ServiceResponse } from "../typings";
+import type { AuthenticationResponseJSON } from "@webauthn/types";
 
 export async function startPasskey() {
   return request.post<
     unknown,
-    AxiosResponse<Service.SuccessfulResponse<FatchedPublicKeyCredentialRequestOptions>>
+    AxiosResponse<ServiceResponse<FatchedPublicKeyCredentialRequestOptions>>
   >("/api/v1/webauthn/passkeys");
 }
 
-export async function finishPasskey(data: PublicKeyCredentialAssert) {
+export async function finishPasskey(data: AuthenticationResponseJSON) {
   return request.put("/api/v1/webauthn/passkeys", { data });
 }

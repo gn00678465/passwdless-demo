@@ -1,11 +1,4 @@
-export type AuthenticatorTransportFuture =
-  | "ble"
-  | "cable"
-  | "hybrid"
-  | "internal"
-  | "nfc"
-  | "smart-card"
-  | "usb";
+import { AuthenticatorTransportFuture } from "./AuthenticatorTransportFuture.type";
 
 export interface PublicKeyCredentialDescriptorFuture
   extends Omit<PublicKeyCredentialDescriptor, "transports"> {
