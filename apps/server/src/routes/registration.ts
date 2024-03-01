@@ -14,7 +14,9 @@ import { Base64Url } from "../utils";
 
 const router = express.Router();
 
-type PostRegistrationReqBody = TypedRequestBody<{ username: string }>;
+type PostRegistrationReqBody = TypedRequestBody<{
+  username: string;
+}>;
 
 const handleRegisterStart = async (
   req: PostRegistrationReqBody,

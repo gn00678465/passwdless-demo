@@ -1,4 +1,4 @@
-import express, { Request, Response, NextFunction } from "express";
+import express, { Response, NextFunction } from "express";
 import {
   generateAuthenticationOptions,
   verifyAuthenticationResponse
@@ -13,7 +13,7 @@ import type {
 import { TypedRequestBody } from "../types";
 import { CustomError } from "../middleware";
 import { userService, credentialService } from "../service";
-import { uint8ArrayToBase64, base64ToUint8Array, Base64Url } from "../utils";
+import { Base64Url } from "../utils";
 
 const router = express.Router();
 
@@ -96,8 +96,8 @@ const handleAuthFinish = async (req: PutPasskeyReqBody, res: Response, next: Nex
       expectedOrigin: String(req.headers.origin),
       expectedRPID: process.env.RP_ID,
       authenticator: {
-        credentialID: base64ToUint8Array(authenticator.credential_id),
-        credentialPublicKey: base64ToUint8Array(authenticator.public_key),
+        credentialID: new Uint8Array(Base64Url.decodeBase64Url(authenticator.credential_id)),
+        credentialPublicKey: new Uint8Array(Base64Url.decodeBase64Url(authenticator.public_key)),
         counter: authenticator.counter,
         transports: JSON.parse(authenticator.transports)
       },
