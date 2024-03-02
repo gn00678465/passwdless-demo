@@ -120,8 +120,8 @@ export default function WebAuthnContext() {
 
   return (
     <Box
-      width={600}
-      sx={{ display: "inline-block", bgColor: "#fff" }}
+      maxWidth={600}
+      sx={{ display: "inline-block", bgColor: "#fff", width: "100%" }}
     >
       <Card
         variant="outlined"
@@ -131,35 +131,38 @@ export default function WebAuthnContext() {
           <Typography
             variant="h4"
             mb={1}
-            sx={{ fontWeight: 500 }}
+            sx={{ fontWeight: 500, fontSize: { xs: "1.875rem", sm: "2.125rem" } }}
           >
             {capitalizeCase(loaderData)}
           </Typography>
-          {loaderData === "login" && (
-            <Typography
-              variant="h6"
-              sx={{ fontWeight: 400 }}
-            >
-              No account yet?{" "}
-              <Link
-                to="/register"
-                color="blue"
-              >
-                Sign up
-              </Link>
-            </Typography>
-          )}
-          {loaderData === "register" && (
-            <Typography variant="h6">
-              You already have an account?{" "}
-              <Link
-                to="/"
-                color="blue"
-              >
-                Log in
-              </Link>
-            </Typography>
-          )}
+          <Typography
+            variant="h6"
+            sx={{ fontWeight: 400, fontSize: { xs: "1rem", sm: "1.25rem" } }}
+          >
+            {loaderData === "login" && (
+              <>
+                No account yet?{" "}
+                <Link
+                  to="/register"
+                  color="blue"
+                >
+                  Sign up
+                </Link>
+              </>
+            )}
+            {loaderData === "register" && (
+              <>
+                You already have an account?{" "}
+                <Link
+                  to="/"
+                  color="blue"
+                >
+                  Log in
+                </Link>
+              </>
+            )}
+          </Typography>
+
           <TextField
             label="Email"
             autoComplete={

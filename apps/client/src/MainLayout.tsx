@@ -16,6 +16,7 @@ export default function MainLayout({ children }: Props) {
             gutterBottom
             align="center"
             fontWeight="bold"
+            sx={{ fontSize: { xs: "2.25rem", sm: "3rem" } }}
           >
             PasswdLess Demo
           </Typography>
