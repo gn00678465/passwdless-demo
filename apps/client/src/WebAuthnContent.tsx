@@ -5,27 +5,35 @@ import {
   Button,
   Box,
   Typography,
-  Alert,
   FormControlLabel,
   Switch,
   Collapse,
   Card,
-  CardContent
+  CardContent,
+  Modal
 } from "@mui/material";
 import { useNavigate, useLoaderData, Link } from "react-router-dom";
 import { isLocalAuthenticator } from "@webauthn/browser";
+import { AdvanceOptionsContextProvider } from "./store";
 
 import AdvanceContext from "./AdvanceContent";
-import { useRegistration, usePassKeys, useAuthentication } from "./hooks";
+import {
+  useRegistration,
+  usePassKeys,
+  useAuthentication,
+  useBoolean,
+  useRegistrationAdvance
+} from "./hooks";
 
 export default function WebAuthnContext() {
   const [field, setField] = useState("");
   const [isAvailable, setIsAvailable] = useState<boolean>(false);
   const navigate = useNavigate();
   const loaderData = useLoaderData() as "login" | "register";
-  const [error, setError] = useState("");
-  const [showAdv, setShowAdv] = useState(true);
   const [attachment, setAttachment] = useState<AuthenticatorAttachment | undefined>(undefined);
+  const { bool, setTrue, setFalse } = useBoolean();
+  const { bool: showAdv, setBool: setShowAdv } = useBoolean(true);
+  const [registerAdvOpts, dispatchRegisterAdvOpts] = useRegistrationAdvance();
 
   useEffect(() => {
     async function getAvailable(): Promise<void> {
@@ -41,7 +49,7 @@ export default function WebAuthnContext() {
   }, []);
 
   const { registrationStart } = useRegistration<{ status: "Success" }>(field, {
-    attachment,
+    params: registerAdvOpts,
     onSuccess: (args) => {
       setField(() => "");
       if (args?.status === "Success") {
@@ -55,11 +63,9 @@ export default function WebAuthnContext() {
       if (error instanceof Error) {
         if (error.name === "InvalidStateError") {
           console.error("InvalidStateError", error.name);
-          setError(() => "此裝置已註冊過");
         }
         if (error.name === "NotAllowedError") {
-          console.error("NotAllowedError", error.name);
-          setError(() => "使用者已取消作業");
+          setTrue();
         }
       }
       console.error(error);
@@ -80,8 +86,7 @@ export default function WebAuthnContext() {
     onError(error) {
       if (error instanceof Error) {
         if (error.name === "NotAllowedError") {
-          console.error("NotAllowedError", error.name);
-          setError(() => "使用者已取消作業");
+          setTrue();
         }
       }
       console.error(error);
@@ -102,8 +107,7 @@ export default function WebAuthnContext() {
     onError(error) {
       if (error instanceof Error) {
         if (error.name === "NotAllowedError") {
-          console.error("NotAllowedError", error.name);
-          setError(() => "使用者已取消作業");
+          setTrue();
         }
       }
       console.error(error);
@@ -119,149 +123,190 @@ export default function WebAuthnContext() {
   }
 
   return (
-    <Box
-      maxWidth={600}
-      sx={{ display: "inline-block", bgColor: "#fff", width: "100%" }}
-    >
-      <Card
-        variant="outlined"
-        sx={{ borderRadius: 3, boxShadow: "0 0.5rem 1rem rgb(0 0 0 / 15%)" }}
+    <>
+      <Typography
+        variant="h3"
+        gutterBottom
+        align="center"
+        fontWeight="bold"
+        sx={{ fontSize: { xs: "2.25rem", sm: "3rem" } }}
       >
-        <CardContent>
-          <Typography
-            variant="h4"
-            mb={1}
-            sx={{ fontWeight: 500, fontSize: { xs: "1.875rem", sm: "2.125rem" } }}
-          >
-            {capitalizeCase(loaderData)}
-          </Typography>
-          <Typography
-            variant="h6"
-            sx={{ fontWeight: 400, fontSize: { xs: "1rem", sm: "1.25rem" } }}
-          >
-            {loaderData === "login" && (
-              <>
-                No account yet?{" "}
-                <Link
-                  to="/register"
-                  color="blue"
-                >
-                  Sign up
-                </Link>
-              </>
-            )}
-            {loaderData === "register" && (
-              <>
-                You already have an account?{" "}
-                <Link
-                  to="/"
-                  color="blue"
-                >
-                  Log in
-                </Link>
-              </>
-            )}
-          </Typography>
-
-          <TextField
-            label="Email"
-            autoComplete={
-              loaderData === "login"
-                ? "email webauthn"
-                : loaderData === "register"
-                  ? "email"
-                  : undefined
-            }
-            variant="outlined"
-            type="email"
-            size="medium"
-            fullWidth
-            value={field}
-            sx={{ mt: 3 }}
-            onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-              setField(event.target.value);
-            }}
-          />
-          {error && (
-            <Alert
-              variant="filled"
-              severity="error"
-              sx={{ mt: 3 }}
-            >
-              {error}
-            </Alert>
-          )}
-          {isAvailable ? (
-            <Stack
-              direction="row"
-              spacing={3}
-              useFlexGap
-              sx={{ mt: 3 }}
-              justifyContent="center"
-            >
-              {loaderData === "register" && (
-                <Button
-                  variant="contained"
-                  fullWidth
-                  onClick={async () => {
-                    if (field === "") return;
-                    await registrationStart();
-                  }}
-                >
-                  Register
-                </Button>
-              )}
-              {loaderData === "login" && (
-                <>
-                  <Button
-                    variant="contained"
-                    fullWidth
-                    onClick={async () => {
-                      await authenticationStart();
-                    }}
-                  >
-                    Authenticate
-                  </Button>
-                  <Button
-                    variant="contained"
-                    fullWidth
-                    onClick={async () => {
-                      await passkeysAuthStart();
-                    }}
-                  >
-                    Passkeys
-                  </Button>
-                </>
-              )}
-            </Stack>
-          ) : (
+        PasswdLess Demo
+      </Typography>
+      <Typography
+        variant="subtitle1"
+        gutterBottom
+        align="center"
+      >
+        A demo of the WebAuthn specification
+      </Typography>
+      <Box
+        maxWidth={600}
+        sx={{ display: "inline-block", bgColor: "#fff", width: "100%" }}
+      >
+        <Card
+          variant="outlined"
+          sx={{ borderRadius: 3, boxShadow: "0 0.5rem 1rem rgb(0 0 0 / 15%)" }}
+        >
+          <CardContent>
             <Typography
               variant="h4"
-              color="red"
-              sx={{ mt: 3 }}
+              mb={1}
+              sx={{ fontWeight: 500, fontSize: { xs: "1.875rem", sm: "2.125rem" } }}
             >
-              瀏覽器不支援 WebAuthn
+              {capitalizeCase(loaderData)}
             </Typography>
-          )}
-        </CardContent>
-      </Card>
-      <Box sx={{ mt: 3, width: "auto", textAlign: "left" }}>
-        <FormControlLabel
-          control={
-            <Switch
-              checked={showAdv}
-              onChange={handleChange}
+            <Typography
+              variant="h6"
+              sx={{ fontWeight: 400, fontSize: { xs: "1rem", sm: "1.25rem" } }}
+            >
+              {loaderData === "login" && (
+                <>
+                  No account yet?{" "}
+                  <Link
+                    to="/register"
+                    color="blue"
+                  >
+                    Sign up
+                  </Link>
+                </>
+              )}
+              {loaderData === "register" && (
+                <>
+                  You already have an account?{" "}
+                  <Link
+                    to="/"
+                    color="blue"
+                  >
+                    Log in
+                  </Link>
+                </>
+              )}
+            </Typography>
+
+            <TextField
+              label="Email"
+              autoComplete={
+                loaderData === "login"
+                  ? "email webauthn"
+                  : loaderData === "register"
+                    ? "email"
+                    : undefined
+              }
+              variant="outlined"
+              type="email"
+              size="medium"
+              fullWidth
+              value={field}
+              sx={{ mt: 3 }}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                setField(event.target.value);
+              }}
             />
-          }
-          label="Advance"
-        />
-        <Collapse in={showAdv}>
-          <AdvanceContext
-            attachment={attachment}
-            setAttachment={setAttachment}
-          ></AdvanceContext>
-        </Collapse>
+            {isAvailable ? (
+              <Stack
+                direction="row"
+                spacing={3}
+                useFlexGap
+                sx={{ mt: 3 }}
+                justifyContent="center"
+              >
+                {loaderData === "register" && (
+                  <Button
+                    variant="contained"
+                    fullWidth
+                    onClick={async () => {
+                      if (field === "") return;
+                      await registrationStart();
+                    }}
+                  >
+                    Register
+                  </Button>
+                )}
+                {loaderData === "login" && (
+                  <>
+                    <Button
+                      variant="contained"
+                      fullWidth
+                      onClick={async () => {
+                        await authenticationStart();
+                      }}
+                    >
+                      Authenticate
+                    </Button>
+                    <Button
+                      variant="contained"
+                      fullWidth
+                      onClick={async () => {
+                        await passkeysAuthStart();
+                      }}
+                    >
+                      Passkeys
+                    </Button>
+                  </>
+                )}
+              </Stack>
+            ) : (
+              <Typography
+                variant="h4"
+                color="red"
+                sx={{ mt: 3 }}
+              >
+                瀏覽器不支援 WebAuthn
+              </Typography>
+            )}
+          </CardContent>
+        </Card>
+        <Box sx={{ mt: 3, width: "auto", textAlign: "left" }}>
+          <FormControlLabel
+            control={
+              <Switch
+                checked={showAdv}
+                onChange={handleChange}
+              />
+            }
+            label="Advance"
+          />
+          <Collapse in={showAdv}>
+            <AdvanceOptionsContextProvider
+              registerAdvOpts={registerAdvOpts}
+              dispatchRegisterAdvOpts={dispatchRegisterAdvOpts}
+            >
+              <AdvanceContext></AdvanceContext>
+            </AdvanceOptionsContextProvider>
+          </Collapse>
+        </Box>
       </Box>
-    </Box>
+      <Modal
+        open={bool}
+        onClose={setFalse}
+        aria-labelledby="modal-modal-title"
+        aria-describedby="modal-modal-description"
+      >
+        <Box
+          sx={{
+            position: "absolute" as "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: 400,
+            bgcolor: "background.paper",
+            boxShadow: 24,
+            p: 4
+          }}
+        >
+          <Typography>
+            The operation either timed out or was not allowed. See:
+            <Link
+              target="_blank"
+              color="blue"
+              to="https://www.w3.org/TR/webauthn-2/#sctn-privacy-considerations-client."
+            >
+              https://www.w3.org/TR/webauthn-2/#sctn-privacy-considerations-client.
+            </Link>
+          </Typography>
+        </Box>
+      </Modal>
+    </>
   );
 }

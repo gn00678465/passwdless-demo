@@ -16,6 +16,7 @@ type PostRegistrationReqBody = TypedRequestBody<{
   username: string;
   params: {
     authenticatorSelection?: AuthenticatorSelectionCriteria;
+    attestation?: AttestationConveyancePreference;
   };
 }>;
 
@@ -31,7 +32,8 @@ export const handleRegisterStart = async (
         authenticatorAttachment = "cross-platform",
         userVerification = "preferred",
         residentKey = "required"
-      } = {}
+      } = {},
+      attestation = "none"
     } = {}
   } = req.body;
 
@@ -59,7 +61,7 @@ export const handleRegisterStart = async (
       userID: user.id,
       userName: username,
       timeout: 90000,
-      attestationType: "none",
+      attestationType: attestation,
       excludeCredentials: excludeCredentials,
       authenticatorSelection: {
         residentKey,

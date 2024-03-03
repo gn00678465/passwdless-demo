@@ -1,23 +1,24 @@
-import { startRegister, finishRegister } from "../service/register";
+import { startRegister, finishRegister } from "../service/registration";
 import { webauthnRegistration, WebauthnRegistrationOptions } from "@webauthn/browser";
 import {
   PublicKeyCredentialCreationOptionsTransform,
   PublicKeyCredentialAttestationAdapter
 } from "../utils";
+import type { RegistrationAdvanceState } from "./useRegistrationAdvance";
 
 export interface UseRegistrationOptions<TR>
   extends Pick<WebauthnRegistrationOptions<TR>, "onSuccess" | "onComplete" | "onError" | "signal"> {
-  attachment?: AuthenticatorAttachment | undefined;
+  params?: RegistrationAdvanceState;
 }
 
 export function useRegistration<TR>(
   name: string,
-  { signal, onComplete, onSuccess, onError }: UseRegistrationOptions<TR>
+  { signal, onComplete, onSuccess, onError, params = {} }: UseRegistrationOptions<TR>
 ) {
   async function registrationStart() {
     await webauthnRegistration<TR>({
       getPublicKeyCreationOptions: async () => {
-        const res = await startRegister(name);
+        const res = await startRegister({ username: name, params });
         if (res.data.status === "Success") {
           return new PublicKeyCredentialCreationOptionsTransform(res.data.data).options;
         }
