@@ -1,4 +1,4 @@
-import express from "express";
+import express, { Request, Response, NextFunction } from "express";
 import cors from "cors";
 import createHttpError from "http-errors";
 import cookieParser from "cookie-parser";
@@ -10,6 +10,7 @@ import db from "./storage/index";
 import registrationRouter from "./routes/registration";
 import authenticationRouter from "./routes/authentication";
 import passkeysRouter from "./routes/passkeys";
+import { handleError } from "./middleware";
 
 dotenv.config();
 const app = express();
@@ -42,14 +43,15 @@ app.use(
 );
 
 // router
-app.use("/api/v1/webauthn", registrationRouter);
-app.use("/api/v1/webauthn", authenticationRouter);
-app.use("/api/v1/webauthn", passkeysRouter);
+app.use("/api/v1/webauthn", registrationRouter, authenticationRouter, passkeysRouter);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
   next(createHttpError(404, "Page not found!"));
 });
+
+// 自定義的錯誤處理中介軟體
+app.use(handleError);
 
 process.on("exit", () => db.close());
 

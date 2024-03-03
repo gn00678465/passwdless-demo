@@ -1,3 +1,4 @@
+import { Base64UrlString } from "../common";
 import type { AuthenticationExtensionsClientOutputsJSON } from "./common.type";
 import { AuthenticatorTransportFuture } from "../CredentialOptionsJSON";
 
@@ -5,8 +6,8 @@ import { AuthenticatorTransportFuture } from "../CredentialOptionsJSON";
  * 前端產生 public credential 後轉換為 JSON 格式
  */
 export interface RegistrationResponseJSON {
-  id: string;
-  rawId: string;
+  id: Base64UrlString;
+  rawId: Base64UrlString;
   response: AuthenticatorAttestationResponseJSON;
   clientExtensionResults: AuthenticationExtensionsClientOutputsJSON;
   authenticatorAttachment?: AuthenticatorAttachment;
@@ -23,10 +24,10 @@ type OmitAuthenticatorAttestationResponse =
 
 export interface AuthenticatorAttestationResponseJSON
   extends Omit<AuthenticatorAttestationResponse, OmitAuthenticatorAttestationResponse> {
-  clientDataJSON: string;
-  authenticatorData: string;
+  clientDataJSON: Base64UrlString;
+  authenticatorData: Base64UrlString;
   transports: AuthenticatorTransportFuture[];
-  attestationObject: string;
-  publicKey: string;
+  attestationObject: Base64UrlString;
+  publicKey: Base64UrlString;
   publicKeyAlgorithm: number;
 }
