@@ -11,10 +11,26 @@ import { CustomError } from "../../middleware";
 import { credentialService } from "../../service";
 import { Base64Url } from "../../utils";
 
-export const handlePasskeysStart = async (req: Request, res: Response, next: NextFunction) => {
+type PostPassKeysReqBody = TypedRequestBody<{
+  params: {
+    authenticatorSelection?: {
+      userVerification?: UserVerificationRequirement;
+    };
+  };
+}>;
+
+export const handlePasskeysStart = async (
+  req: PostPassKeysReqBody,
+  res: Response,
+  next: NextFunction
+) => {
+  const {
+    params: { authenticatorSelection: { userVerification = "preferred" } = {} }
+  } = req.body;
+
   try {
     const opts: GenerateAuthenticationOptionsOpts = {
-      userVerification: "preferred",
+      userVerification: userVerification,
       allowCredentials: [],
       rpID: process.env.RP_ID
     };

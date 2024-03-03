@@ -60,8 +60,9 @@ export function useRegistrationAdvance(
           ...state,
           attestation: action.payload
         };
+      default:
+        return state;
     }
-    return state;
   }
 
   return useReducer(reducer, defaultState);

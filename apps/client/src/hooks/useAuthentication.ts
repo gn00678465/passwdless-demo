@@ -5,23 +5,24 @@ import {
   PublicKeyCredentialAssertionAdapter,
   PublicKeyCredentialRequestOptionsTransform
 } from "../utils";
+import type { AuthenticationAdvanceState } from "./useAuthenticationAdvance";
 
 export interface UseAuthenticationOptions<TR>
   extends Pick<
     WebauthnAuthenticationOptions<TR>,
     "onSuccess" | "onComplete" | "onError" | "signal"
   > {
-  attachment?: AuthenticatorAttachment | undefined;
+  params?: AuthenticationAdvanceState;
 }
 
 export function useAuthentication<TR>(
   username: string,
-  { onComplete, onSuccess, onError }: UseAuthenticationOptions<TR>
+  { params = {}, onComplete, onSuccess, onError }: UseAuthenticationOptions<TR>
 ) {
   async function authenticationStart() {
     await webauthnAuthentication({
       getPublicKeyRequestOptions: async () => {
-        const res = await startAuth(username);
+        const res = await startAuth({ username, params });
         if (res.data.status === "Success") {
           return new PublicKeyCredentialRequestOptionsTransform(res.data.data).options;
         }

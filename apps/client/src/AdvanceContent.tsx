@@ -8,7 +8,8 @@ import Select from "@mui/material/Select";
 import { AdvanceOptionsContext } from "./store";
 
 function AdvanceContext() {
-  const { registerAdvOpts, dispatchRegisterAdvOpts } = useContext(AdvanceOptionsContext);
+  const { registerAdvOpts, dispatchRegisterAdvOpts, authAdvOpts, dispatchAuthAdvOpts } =
+    useContext(AdvanceOptionsContext);
 
   return (
     <Card
@@ -173,6 +174,11 @@ function AdvanceContext() {
                 id="user-verification"
                 label="User Verification"
                 defaultValue={"preferred"}
+                value={authAdvOpts?.authenticatorSelection?.userVerification}
+                onChange={(event) => {
+                  const value = event.target.value as UserVerificationRequirement;
+                  dispatchAuthAdvOpts?.({ type: "USER_VERIFICATION", payload: value });
+                }}
               >
                 <MenuItem value="discouraged">Discouraged</MenuItem>
                 <MenuItem value="preferred">Preferred</MenuItem>

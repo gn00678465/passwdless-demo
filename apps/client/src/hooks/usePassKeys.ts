@@ -1,17 +1,19 @@
 import { useRef } from "react";
 import { passkeysAuthentication, WebauthnAuthenticationOptions } from "@webauthn/browser";
-import { startPasskey, finishPasskey } from "../service/passleys";
+import { startPasskeys, finishPasskeys } from "../service/passleys";
 import {
   PublicKeyCredentialAssertionAdapter,
   PublicKeyCredentialRequestOptionsTransform
 } from "../utils";
+import type { AuthenticationAdvanceState } from "./useAuthenticationAdvance";
 
 export interface UsePassKeysOptions<TR>
   extends Pick<WebauthnAuthenticationOptions<TR>, "onSuccess" | "onComplete" | "onError"> {
-  attachment?: AuthenticatorAttachment | undefined;
+  params?: AuthenticationAdvanceState;
 }
 
 export function usePassKeys<TR = unknown>({
+  params = {},
   onComplete,
   onSuccess,
   onError
@@ -24,7 +26,7 @@ export function usePassKeys<TR = unknown>({
       signal: abortController.current?.signal,
       getPublicKeyRequestOptions: async () => {
         abortController.current = new AbortController();
-        const res = await startPasskey();
+        const res = await startPasskeys({ params });
         if (res.data.status === "Success") {
           return new PublicKeyCredentialRequestOptionsTransform(res.data.data).options;
         }
@@ -32,7 +34,7 @@ export function usePassKeys<TR = unknown>({
       },
       sendSignedChallenge: async (credential) => {
         if (credential) {
-          const res = await finishPasskey(
+          const res = await finishPasskeys(
             new PublicKeyCredentialAssertionAdapter(credential).toJson()
           );
           return res.data;

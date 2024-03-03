@@ -3,12 +3,18 @@ import { request } from "./request";
 
 import type { FatchedPublicKeyCredentialRequestOptions, ServiceResponse } from "../typings";
 import type { AuthenticationResponseJSON } from "@webauthn/types";
+import type { AuthenticationAdvanceState } from "../hooks";
 
-export async function startAuth(username: string) {
+export interface StartAuthOptions {
+  username: string;
+  params?: AuthenticationAdvanceState;
+}
+
+export async function startAuth({ username, params = {} }: StartAuthOptions) {
   return request.post<
     string,
     AxiosResponse<ServiceResponse<FatchedPublicKeyCredentialRequestOptions>>
-  >("/api/v1/webauthn/authentication", { username });
+  >("/api/v1/webauthn/authentication", { username, params });
 }
 
 export async function finishAuth(data: AuthenticationResponseJSON) {

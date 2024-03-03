@@ -22,7 +22,8 @@ import {
   usePassKeys,
   useAuthentication,
   useBoolean,
-  useRegistrationAdvance
+  useRegistrationAdvance,
+  useAuthenticationAdvance
 } from "./hooks";
 
 export default function WebAuthnContext() {
@@ -30,10 +31,10 @@ export default function WebAuthnContext() {
   const [isAvailable, setIsAvailable] = useState<boolean>(false);
   const navigate = useNavigate();
   const loaderData = useLoaderData() as "login" | "register";
-  const [attachment, setAttachment] = useState<AuthenticatorAttachment | undefined>(undefined);
   const { bool, setTrue, setFalse } = useBoolean();
   const { bool: showAdv, setBool: setShowAdv } = useBoolean(true);
   const [registerAdvOpts, dispatchRegisterAdvOpts] = useRegistrationAdvance();
+  const [authAdvOpts, dispatchAuthAdvOpts] = useAuthenticationAdvance();
 
   useEffect(() => {
     async function getAvailable(): Promise<void> {
@@ -73,7 +74,7 @@ export default function WebAuthnContext() {
   });
 
   const { authenticationStart } = useAuthentication<{ status: "Success" }>(field, {
-    attachment,
+    params: authAdvOpts,
     onSuccess: (args) => {
       setField(() => "");
       if (args?.status === "Success") {
@@ -94,7 +95,7 @@ export default function WebAuthnContext() {
   });
 
   const { passkeysAuthStart } = usePassKeys<{ status: "Success" }>({
-    attachment,
+    params: authAdvOpts,
     onSuccess: (args) => {
       setField(() => "");
       if (args?.status === "Success") {
@@ -271,6 +272,8 @@ export default function WebAuthnContext() {
             <AdvanceOptionsContextProvider
               registerAdvOpts={registerAdvOpts}
               dispatchRegisterAdvOpts={dispatchRegisterAdvOpts}
+              authAdvOpts={authAdvOpts}
+              dispatchAuthAdvOpts={dispatchAuthAdvOpts}
             >
               <AdvanceContext></AdvanceContext>
             </AdvanceOptionsContextProvider>

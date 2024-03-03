@@ -15,14 +15,24 @@ import { CustomError } from "../../middleware";
 import { userService, credentialService } from "../../service";
 import { Base64Url } from "../../utils";
 
-type PostAuthenticationReqBody = TypedRequestBody<{ username: string }>;
+type PostAuthenticationReqBody = TypedRequestBody<{
+  username: string;
+  params: {
+    authenticatorSelection?: {
+      userVerification?: UserVerificationRequirement;
+    };
+  };
+}>;
 
 export const handleAuthStart = async (
   req: PostAuthenticationReqBody,
   res: Response,
   next: NextFunction
 ) => {
-  const { username } = req.body;
+  const {
+    username,
+    params: { authenticatorSelection: { userVerification = "preferred" } = {} }
+  } = req.body;
   if (!username) {
     return next(new CustomError("請填入使用者名稱", 400));
   }
@@ -44,7 +54,7 @@ export const handleAuthStart = async (
     });
 
     const opts: GenerateAuthenticationOptionsOpts = {
-      userVerification: "preferred",
+      userVerification: userVerification,
       allowCredentials: allowCredentials,
       rpID: process.env.RP_ID
     };
