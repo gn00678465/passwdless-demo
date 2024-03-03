@@ -1,0 +1,26 @@
+{
+  "name": "@passless-demo/monorepo",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "scripts": {
+    "@webauthn-browser": "pnpm --filter @webauthn/browser",
+    "@webauthn-server": "pnpm --filter @webauthn/server",
+    "@webauthn-types": "pnpm --filter @webauthn/types",
+    "passless-client": "pnpm --filter @passless-demo/client",
+    "passless-server": "pnpm --filter @passless-demo/server",
+    "format": "prettier --write src/",
+    "dev": "run-p \"passless-client -- dev\" \"passless-server -- dev\" --"
+  },
+  "devDependencies": {
+    "npm-run-all2": "^6.1.2",
+    "prettier": "^3.1.0",
+    "unocss": "^0.58.5"
+  },
+  "dependencies": {
+    "@unocss/reset": "^0.58.5"
+  }
+}
