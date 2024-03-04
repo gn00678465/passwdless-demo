@@ -1,9 +1,11 @@
 # WebAuthn Demo
+
 > WebAuthn 無密碼登入實做練習
 
-
 ### 流程
+
 **註冊**
+
 ```mermaid
 sequenceDiagram
   Title: Registration
@@ -28,6 +30,7 @@ sequenceDiagram
 ```
 
 **登入**
+
 ```mermaid
 sequenceDiagram
   Title: Authentication
@@ -37,7 +40,7 @@ sequenceDiagram
   participant Relying Party
   participant Authenticator
   User ->> User Agent: Click Login
-  Note over User,User Agent: 帶入必要訊息(username) 
+  Note over User,User Agent: 帶入必要訊息(username)
   User Agent ->> Relying Party: Get challenge
   Relying Party -->> User Agent: Challenge + private key ID
   Note over Relying Party,User Agent: 產生 PublicKeyCredential 相關參數
@@ -52,8 +55,8 @@ sequenceDiagram
   User Agent ->> User: User logged in
 ```
 
-
 **PassKeys**
+
 ```mermaid
 sequenceDiagram
   Title: Passkeys Authentication
@@ -79,36 +82,38 @@ sequenceDiagram
 ```
 
 ### Feature
+
 - [x] 將 WebAuthn 功能模組化
 - [x] 調整為 Monorepo 資料夾結構
 - [ ] 後端驗證功能研究並實作
+- [ ] 新增 mongodb 支援
+- [x] Dockerlize
 
 ### Usage
 
 **Client**
+
 ```
 pnpm install
 
-pnpm dev
+pnpm passless-client dev
 ```
 
 **Server**
+
 ```
 pnpm install
 
-pnpm dev
+pnpm passless-server dev
 ```
 
 **Docker**
-```
-docker-compose up -d
-```
 
-**Docker(tls)**
-1. 準備憑證(mkcert)
-    - **serve-spa.localhost**
+1. 準備憑證
+   - **webauthn.localhost**
 2. 將憑證放入根目錄 **.certs**
-    - 名稱對應 **docker/dynamic_conf.yaml** 內的設定名稱
+   - 名稱對應 **docker/dynamic_conf.yaml** 內的設定名稱
+
 ```
-docker-compose -f docker-compose-tls.yml up -d
+docker compose up -d
 ```
