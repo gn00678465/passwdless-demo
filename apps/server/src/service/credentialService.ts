@@ -44,7 +44,9 @@ export const credentialService = {
   },
   async getCredentialByCredentialId(credentialId: string) {
     try {
-      const stmt = db.prepare<[string]>("SELECT * FROM credentials WHERE credential_id = ?");
+      const stmt = db.prepare<[string]>(`
+      SELECT * FROM credentials INNER JOIN users ON credentials.user_id = users.id WHERE credential_id = ?
+      `);
       return stmt.get(credentialId) as CredentialInfo | undefined | null;
     } catch (error) {
       console.error("Error retrieving credential:", error);
@@ -53,7 +55,9 @@ export const credentialService = {
   },
   async getAllCredentialByCredentialId(credentialId: string) {
     try {
-      const stmt = db.prepare<[string]>("SELECT * FROM credentials WHERE credential_id = ?");
+      const stmt = db.prepare<[string]>(`
+      SELECT * FROM credentials INNER JOIN users ON credentials.user_id = users.id WHERE credential_id = ?
+      `);
       return (stmt.all(credentialId) || []) as CredentialInfo[];
     } catch (error) {
       console.error("Error retrieving credential:", error);
@@ -62,7 +66,9 @@ export const credentialService = {
   },
   async getCredentialByUserId(userId: string) {
     try {
-      const stmt = db.prepare<[string]>("SELECT * FROM credentials WHERE user_id = ?");
+      const stmt = db.prepare<[string]>(`
+      SELECT * FROM credentials INNER JOIN users ON credentials.user_id = users.id WHERE user_id = ?
+      `);
       return stmt.get(userId) as CredentialInfo | undefined | null;
     } catch (error) {
       console.error("Error retrieving credential:", error);
@@ -71,14 +77,26 @@ export const credentialService = {
   },
   async getAllCredentialByUserId(userId: string) {
     try {
-      const stmt = db.prepare<[string]>("SELECT * FROM credentials WHERE user_id = ?");
+      const stmt = db.prepare<[string]>(`
+      SELECT * FROM credentials INNER JOIN users ON credentials.user_id = users.id WHERE user_id = ?
+      `);
       return (stmt.all(userId) || []) as CredentialInfo[];
     } catch (error) {
       console.error("Error retrieving credential:", error);
       throw error;
     }
   },
-  async updateCredentialCounter() {}
+  async updateCredentialCounterAndTime(credentialId: string, newCounter: number) {
+    try {
+      const stmt = db.prepare<[number, string]>(
+        "UPDATE credentials SET counter = ?, updated_at = CURRENT_TIMESTAMP WHERE credential_id = ?"
+      );
+      stmt.run(newCounter, credentialId);
+    } catch (error) {
+      console.error("Error updating credential counter:", error);
+      throw error;
+    }
+  }
 };
 
 export type CredentialService = typeof credentialService;

@@ -29,7 +29,7 @@ export const handleRegisterStart = async (
     username,
     params: {
       authenticatorSelection: {
-        authenticatorAttachment = "cross-platform",
+        authenticatorAttachment = undefined,
         userVerification = "preferred",
         residentKey = "required"
       } = {},

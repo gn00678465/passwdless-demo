@@ -1,4 +1,4 @@
-import express, { Request, Response, NextFunction } from "express";
+import { Response, NextFunction } from "express";
 import {
   generateAuthenticationOptions,
   verifyAuthenticationResponse
@@ -89,7 +89,13 @@ export const handlePasskeysFinish = async (
       requireUserVerification: true
     });
 
-    if (verification.verified && verification.authenticationInfo) {
+    const { verified, authenticationInfo } = verification;
+
+    if (verified && authenticationInfo) {
+      await credentialService.updateCredentialCounterAndTime(
+        Base64Url.encodeBase64Url(authenticationInfo.credentialID),
+        authenticationInfo.newCounter
+      );
     } else {
       next(new CustomError("Verification failed", 400));
     }
