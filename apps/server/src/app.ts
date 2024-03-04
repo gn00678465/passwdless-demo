@@ -45,6 +45,8 @@ app.use(
 // router
 app.use("/api/v1/webauthn", registrationRouter, authenticationRouter, passkeysRouter);
 
+app.use(express.static("./public"));
+
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
   next(createHttpError(404, "Page not found!"));

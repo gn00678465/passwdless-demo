@@ -6,6 +6,8 @@ declare global {
       PORT: string;
       RP_ID: string;
       RP_NAME: string;
+      DATABASE: "sqlite3" | "mongodb";
+      DATABASE_URL?: string;
     }
   }
 }

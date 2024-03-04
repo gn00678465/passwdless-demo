@@ -1,0 +1,36 @@
+version: "3.3"
+
+services:
+  traefik:
+    image: traefik:v2.7
+    container_name: traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik=true"
+      - "traefik.http.routers.traefik.tls=true"
+      - "traefik.http.services.traefik.loadbalancer.server.port=8080"
+    ports:
+      - "80:80"
+      - "8081:8080"
+      - "443:443"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - ./docker/traefik/traefik.yaml:/etc/traefik/traefik.yaml:ro
+      - ./docker/traefik/dynamic_conf.yaml:/etc/traefik/dynamic_conf.yaml:ro
+      - ./certs:/etc/certs:ro
+  webauthn:
+    container_name: webauthn-demo
+    build:
+      context: "." # name of the folder where Dockerfile is located
+      dockerfile: Dockerfile
+    environment:
+      - PORT=80
+      - RP_ID=webauthn.localhost
+      - RP_NAME=webauthn.localhost
+      # - NODE_ENV=production
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.webauthn.tls=true"
+      - "traefik.http.routers.webauthn.rule=Host(`webauthn.localhost`)"
+      # - "traefik.http.routers.webauthn.entrypoints=web"
+      - "traefik.http.routers.webauthn.entrypoints=websecure"

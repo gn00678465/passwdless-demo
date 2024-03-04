@@ -13,7 +13,8 @@
     "passless-client": "pnpm --filter @passless-demo/client",
     "passless-server": "pnpm --filter @passless-demo/server",
     "format": "prettier --write src/",
-    "dev": "run-p \"passless-client -- dev\" \"passless-server -- dev\" --"
+    "dev": "run-p \"passless-client -- dev\" \"passless-server -- dev\" --",
+    "build": "run-p \"passless-client -- build\" \"passless-server -- build\" --"
   },
   "devDependencies": {
     "npm-run-all2": "^6.1.2",
