@@ -141,6 +141,5 @@ export const handleAuthFinish = async (
     next(error instanceof CustomError ? error : new CustomError("Internal Server Error", 500));
   } finally {
     req.session.currentChallenge = undefined;
-    req.session.loggedInUserId = undefined;
   }
 };
