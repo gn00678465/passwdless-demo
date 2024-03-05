@@ -32,7 +32,7 @@ export default function WebAuthnContext() {
   const navigate = useNavigate();
   const loaderData = useLoaderData() as "login" | "register";
   const { bool, setTrue, setFalse } = useBoolean();
-  const { bool: showAdv, setBool: setShowAdv } = useBoolean(true);
+  const { bool: showAdv, setBool: setShowAdv } = useBoolean(false);
   const [registerAdvOpts, dispatchRegisterAdvOpts] = useRegistrationAdvance();
   const [authAdvOpts, dispatchAuthAdvOpts] = useAuthenticationAdvance();
 
@@ -125,22 +125,6 @@ export default function WebAuthnContext() {
 
   return (
     <>
-      <Typography
-        variant="h3"
-        gutterBottom
-        align="center"
-        fontWeight="bold"
-        sx={{ fontSize: { xs: "2.25rem", sm: "3rem" } }}
-      >
-        PasswdLess Demo
-      </Typography>
-      <Typography
-        variant="subtitle1"
-        gutterBottom
-        align="center"
-      >
-        A demo of the WebAuthn specification
-      </Typography>
       <Box
         maxWidth={600}
         sx={{ display: "inline-block", bgColor: "#fff", width: "100%" }}
@@ -288,7 +272,7 @@ export default function WebAuthnContext() {
       >
         <Box
           sx={{
-            position: "absolute" as "absolute",
+            position: "absolute",
             top: "50%",
             left: "50%",
             transform: "translate(-50%, -50%)",
