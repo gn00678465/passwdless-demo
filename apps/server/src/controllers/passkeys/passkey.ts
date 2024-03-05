@@ -6,7 +6,7 @@ import {
 import type { GenerateAuthenticationOptionsOpts } from "@simplewebauthn/server";
 import type { AuthenticationResponseJSON } from "@webauthn/types";
 
-import { TypedRequestBody } from "../../types";
+import type { TypedRequestBody } from "../../types";
 import { CustomError } from "../../middleware";
 import { credentialService } from "../../service";
 import { Base64Url } from "../../utils";

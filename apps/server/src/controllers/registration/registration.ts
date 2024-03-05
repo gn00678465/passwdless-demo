@@ -7,7 +7,7 @@ import type {
   PublicKeyCredentialDescriptorFuture
 } from "@webauthn/types";
 
-import { TypedRequestBody } from "../../types";
+import type { TypedRequestBody } from "../../types";
 import { CustomError } from "../../middleware";
 import { userService, credentialService } from "../../service";
 import { Base64Url } from "../../utils";

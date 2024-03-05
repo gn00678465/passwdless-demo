@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from "uuid";
-import db from "../storage";
+import sqlite from "../storage/sqlite3";
 
 export interface UserInfo {
   id: string;
@@ -8,18 +8,18 @@ export interface UserInfo {
 
 export const userService = {
   async getUserById(userId: string) {
-    const fmt = db.prepare<string[]>("SELECT * FROM users WHERE id = ?");
+    const fmt = sqlite.prepare<string[]>("SELECT * FROM users WHERE id = ?");
     return fmt.get(userId) as UserInfo | undefined | null;
   },
 
   async getUserByUsername(username: string) {
-    const fmt = db.prepare<string[]>("SELECT * FROM users WHERE username = ?");
+    const fmt = sqlite.prepare<string[]>("SELECT * FROM users WHERE username = ?");
     return fmt.get(username) as UserInfo | undefined | null;
   },
 
   async createUser(username: string) {
     const id = uuidv4();
-    const stmt = db.prepare<string[]>("INSERT INTO users (id, username) VALUES (?, ?)");
+    const stmt = sqlite.prepare<string[]>("INSERT INTO users (id, username) VALUES (?, ?)");
     stmt.run(id, username);
     return { id, username };
   }

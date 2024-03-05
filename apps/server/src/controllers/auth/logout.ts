@@ -4,7 +4,6 @@ import { CustomError } from "../../middleware";
 export const handleLogout = (req: Request, res: Response, next: NextFunction) => {
   try {
     const { loggedInUserId } = req.session;
-    console.log("🚀 ~ handleLogout ~ loggedInUserId:", loggedInUserId);
 
     if (!loggedInUserId) {
       return next(new CustomError("User ID is missing", 400));
