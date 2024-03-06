@@ -55,6 +55,9 @@ importers:
         specifier: ^7.8.1
         version: 7.8.1
     devDependencies:
+      '@passless-demo/utility':
+        specifier: workspace:*
+        version: link:../../packages/utility
       '@passless/unocss-config':
         specifier: workspace:*
         version: link:../../packages/unocss-config
@@ -146,6 +149,9 @@ importers:
         specifier: ^9.0.1
         version: 9.0.1
     devDependencies:
+      '@passless-demo/utility':
+        specifier: workspace:*
+        version: link:../../packages/utility
       '@simplewebauthn/typescript-types':
         specifier: ^8.3.4
         version: 8.3.4
@@ -198,6 +204,8 @@ importers:
         version: 20.11.20
 
   packages/unocss-config: {}
+
+  packages/utility: {}
 
 packages:
 

@@ -39,6 +39,7 @@
     "@types/uuid": "^9.0.7",
     "@webauthn/server": "workspace:*",
     "@webauthn/types": "workspace:*",
+    "@passless-demo/utility": "workspace:*",
     "tsup": "^8.0.1"
   }
 }

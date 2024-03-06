@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
 import { CustomError } from "../../middleware";
 import { credentialService } from "../../service";
-import { omit } from "../../utils";
+import { omit } from "@passless-demo/utility";
 
 export async function handleCredential(req: Request, res: Response, next: NextFunction) {
   const { loggedInUserId } = req.session;
