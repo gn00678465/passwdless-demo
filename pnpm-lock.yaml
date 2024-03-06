@@ -149,6 +149,9 @@ importers:
         specifier: ^9.0.1
         version: 9.0.1
     devDependencies:
+      '@passless-demo/utility':
+        specifier: workspace:*
+        version: link:../../packages/utility
       '@simplewebauthn/typescript-types':
         specifier: ^8.3.4
         version: 8.3.4
