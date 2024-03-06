@@ -31,7 +31,7 @@ export function usePassKeys<TR = unknown>({
         const res = await startPasskeys({ params });
         if (res.data.status === "Success") {
           if (isEnableCMA) {
-            const omitTimeout = omit(res.data.data, ["timeout"]);
+            const omitTimeout = omit(res.data.data, ["timeout", "allowCredentials"]);
             return new PublicKeyCredentialRequestOptionsTransform(omitTimeout).options;
           }
           return new PublicKeyCredentialRequestOptionsTransform(res.data.data).options;
