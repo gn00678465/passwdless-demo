@@ -170,12 +170,14 @@ export default function WebAuthnContext() {
             </Typography>
 
             <TextField
+              key={loaderData + "_" + "input"}
               label="Email"
+              name="username"
               autoComplete={
                 loaderData === "login"
-                  ? "email webauthn"
+                  ? "username webauthn"
                   : loaderData === "register"
-                    ? "email"
+                    ? "username"
                     : undefined
               }
               variant="outlined"
