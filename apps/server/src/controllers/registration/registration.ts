@@ -7,7 +7,7 @@ import type {
   PublicKeyCredentialDescriptorFuture
 } from "@webauthn/types";
 
-import { TypedRequestBody } from "../../types";
+import type { TypedRequestBody } from "../../types";
 import { CustomError } from "../../middleware";
 import { userService, credentialService } from "../../service";
 import { Base64Url } from "../../utils";
@@ -29,7 +29,7 @@ export const handleRegisterStart = async (
     username,
     params: {
       authenticatorSelection: {
-        authenticatorAttachment = "cross-platform",
+        authenticatorAttachment = undefined,
         userVerification = "preferred",
         residentKey = "required"
       } = {},
@@ -150,6 +150,5 @@ export const handleRegisterFinish = async (
     next(error instanceof CustomError ? error : new CustomError("Internal Server Error", 500));
   } finally {
     req.session.currentChallenge = undefined;
-    req.session.loggedInUserId = undefined;
   }
 };

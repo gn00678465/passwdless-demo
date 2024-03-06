@@ -6,10 +6,12 @@ import * as dotenv from "dotenv";
 import session from "express-session";
 import memorystore from "memorystore";
 
-import db from "./storage/index";
+import sqlite from "./storage/sqlite3/index";
 import registrationRouter from "./routes/registration";
 import authenticationRouter from "./routes/authentication";
 import passkeysRouter from "./routes/passkeys";
+import authRouter from "./routes/auth";
+import credentialRouter from "./routes/credential";
 import { handleError } from "./middleware";
 
 dotenv.config();
@@ -43,7 +45,9 @@ app.use(
 );
 
 // router
+app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/webauthn", registrationRouter, authenticationRouter, passkeysRouter);
+app.use("/api/v1/credentials", credentialRouter);
 
 app.use(express.static("./public"));
 
@@ -55,7 +59,7 @@ app.use(function (req, res, next) {
 // 自定義的錯誤處理中介軟體
 app.use(handleError);
 
-process.on("exit", () => db.close());
+process.on("exit", () => sqlite.close());
 
 export default app;
 

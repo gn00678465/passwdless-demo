@@ -9,7 +9,8 @@ const db = new Database(db_path, {
 db.exec(`
 CREATE TABLE IF NOT EXISTS users (
   id VARCHAR(255) PRIMARY KEY,
-  username TEXT NOT NULL
+  username TEXT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 )`);
 
 db.exec(`
@@ -20,6 +21,8 @@ CREATE TABLE IF NOT EXISTS credentials (
   public_key TEXT NOT NULL,
   counter INTEGER NOT NULL,
   transports JSON,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES users(id)
 )
 `);

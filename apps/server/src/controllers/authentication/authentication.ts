@@ -10,7 +10,7 @@ import type {
   AuthenticationResponseJSON
 } from "@webauthn/types";
 
-import { TypedRequestBody } from "../../types";
+import type { TypedRequestBody } from "../../types";
 import { CustomError } from "../../middleware";
 import { userService, credentialService } from "../../service";
 import { Base64Url } from "../../utils";
@@ -116,13 +116,18 @@ export const handleAuthFinish = async (
       requireUserVerification: true
     });
 
-    if (verification.verified && verification.authenticationInfo) {
+    const { verified, authenticationInfo } = verification;
+
+    if (verified && authenticationInfo) {
+      await credentialService.updateCredentialCounterAndTime(
+        Base64Url.encodeBase64Url(authenticationInfo.credentialID),
+        authenticationInfo.newCounter
+      );
     } else {
       next(new CustomError("Verification failed", 400));
     }
 
     const user = await userService.getUserById(loggedInUserId);
-
     res.status(200).json({
       status: "Success",
       data: {
@@ -135,6 +140,5 @@ export const handleAuthFinish = async (
     next(error instanceof CustomError ? error : new CustomError("Internal Server Error", 500));
   } finally {
     req.session.currentChallenge = undefined;
-    req.session.loggedInUserId = undefined;
   }
 };
