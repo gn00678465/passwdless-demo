@@ -73,6 +73,8 @@ export const handlePasskeysFinish = async (
     const authenticator = await credentialService.getCredentialByCredentialId(data.id);
     if (!authenticator) {
       return next(new CustomError("User is not registered this device", 403));
+    } else {
+      req.session.loggedInUserId = authenticator.user_id;
     }
 
     const verification = await verifyAuthenticationResponse({
