@@ -12,14 +12,14 @@ export interface UseRegistrationOptions<TR>
 }
 
 export function useRegistration<TR>({
-  signal,
   onComplete,
   onSuccess,
   onError,
   params = {}
 }: UseRegistrationOptions<TR>) {
-  async function handleRegistration(name: string) {
+  async function handleRegistration(name: string, signal?: AbortSignal) {
     await webauthnRegistration<TR>({
+      signal,
       getPublicKeyCreationOptions: async () => {
         const res = await startRegister({ username: name, params });
         if (res.data.status === "Success") {
@@ -38,8 +38,7 @@ export function useRegistration<TR>({
       },
       onSuccess,
       onError,
-      onComplete,
-      signal
+      onComplete
     });
   }
 

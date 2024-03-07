@@ -1,16 +1,47 @@
-import { useState } from "react";
+import { useRef, useEffect } from "react";
 import type { ReactNode } from "react";
-import { Stack, TextField, Button, Typography } from "@mui/material";
+import { Stack, Button, Typography } from "@mui/material";
+import FormControl from "@mui/material/FormControl";
+import FormHelperText from "@mui/material/FormHelperText";
+import OutlinedInput from "@mui/material/OutlinedInput";
+import InputLabel from "@mui/material/InputLabel";
 import { Link } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import type { SubmitHandler } from "react-hook-form";
 
 export interface RegistrationProps {
   isAvailable: boolean;
   children?: ReactNode;
-  onRegistration?: (name: string) => Promise<void>;
+  onRegistration?: (name: string, single?: AbortSignal) => Promise<void>;
 }
 
+type FormValue = {
+  username: string;
+};
+
 export const Registration = ({ isAvailable, children, onRegistration }: RegistrationProps) => {
-  const [field, setField] = useState("");
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors }
+  } = useForm<FormValue>({ defaultValues: { username: "" } });
+
+  useEffect(() => {
+    if (!abortControllerRef.current) {
+      abortControllerRef.current = new AbortController();
+    }
+  }, []);
+
+  function abort() {
+    abortControllerRef.current?.abort("Abort previous request");
+    abortControllerRef.current = new AbortController();
+  }
+
+  const onSubmit: SubmitHandler<FormValue> = async ({ username }) => {
+    abort();
+    await onRegistration?.(username, abortControllerRef.current?.signal);
+  };
 
   return (
     <>
@@ -28,47 +59,47 @@ export const Registration = ({ isAvailable, children, onRegistration }: Registra
         </Link>
       </Typography>
 
-      <TextField
-        label="Email"
-        name="username"
-        autoComplete="username"
-        variant="outlined"
-        type="email"
-        size="medium"
-        fullWidth
-        value={field}
-        sx={{ mt: 3 }}
-        onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-          setField(event.target.value);
-        }}
-      />
-      {isAvailable ? (
-        <Stack
-          direction="row"
-          spacing={3}
-          useFlexGap
-          sx={{ mt: 3 }}
-          justifyContent="center"
+      <form onSubmit={handleSubmit(onSubmit)}>
+        <FormControl
+          error={errors.username ? true : false}
+          sx={{ mt: 3, width: "100%" }}
         >
-          <Button
-            variant="contained"
-            fullWidth
-            onClick={async () => {
-              await onRegistration?.(field);
-            }}
+          <InputLabel htmlFor="component-outlined">Email</InputLabel>
+          <OutlinedInput
+            id="component-outlined"
+            label="Email"
+            defaultValue=""
+            {...register("username", { required: "Email Address is required" })}
+            aria-invalid={errors.username ? "true" : "false"}
+          />
+          {errors?.username && <FormHelperText>{errors.username.message}</FormHelperText>}
+        </FormControl>
+        {isAvailable ? (
+          <Stack
+            direction="row"
+            spacing={3}
+            useFlexGap
+            sx={{ mt: 3 }}
+            justifyContent="center"
           >
-            Register
-          </Button>
-        </Stack>
-      ) : (
-        <Typography
-          variant="h4"
-          color="red"
-          sx={{ mt: 3 }}
-        >
-          瀏覽器不支援 WebAuthn
-        </Typography>
-      )}
+            <Button
+              variant="contained"
+              fullWidth
+              type="submit"
+            >
+              Register
+            </Button>
+          </Stack>
+        ) : (
+          <Typography
+            variant="h4"
+            color="red"
+            sx={{ mt: 3 }}
+          >
+            瀏覽器不支援 WebAuthn
+          </Typography>
+        )}
+      </form>
     </>
   );
 };
