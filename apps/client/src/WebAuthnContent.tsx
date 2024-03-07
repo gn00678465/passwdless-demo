@@ -1,8 +1,5 @@
 import { useState, useEffect } from "react";
 import {
-  Stack,
-  TextField,
-  Button,
   Box,
   Typography,
   FormControlLabel,
@@ -15,8 +12,8 @@ import {
 import { useNavigate, useLoaderData, Link } from "react-router-dom";
 import { isLocalAuthenticator } from "@webauthn/browser";
 import { AdvanceOptionsContextProvider } from "./store";
+import { Registration, Authentication, AdvanceContext } from "./components";
 
-import AdvanceContext from "./AdvanceContent";
 import {
   useRegistration,
   usePassKeys,
@@ -27,7 +24,6 @@ import {
 } from "./hooks";
 
 export default function WebAuthnContext() {
-  const [field, setField] = useState("");
   const [isAvailable, setIsAvailable] = useState<boolean>(false);
   const navigate = useNavigate();
   const loaderData = useLoaderData() as "login" | "register";
@@ -49,17 +45,14 @@ export default function WebAuthnContext() {
     getAvailable();
   }, []);
 
-  const { registrationStart } = useRegistration<{ status: "Success" }>(field, {
+  const { handleRegistration } = useRegistration<{ status: "Success" }>({
     params: registerAdvOpts,
     onSuccess: (args) => {
-      setField(() => "");
       if (args?.status === "Success") {
         navigate("/home");
       }
     },
-    onComplete() {
-      setField(() => "");
-    },
+    onComplete() {},
     onError(error) {
       if (error instanceof Error) {
         if (error.name === "InvalidStateError") {
@@ -73,17 +66,14 @@ export default function WebAuthnContext() {
     }
   });
 
-  const { authenticationStart } = useAuthentication<{ status: "Success" }>(field, {
+  const { handleAuthentication } = useAuthentication<{ status: "Success" }>({
     params: authAdvOpts,
     onSuccess: (args) => {
-      setField(() => "");
       if (args?.status === "Success") {
         navigate("/home");
       }
     },
-    onComplete() {
-      setField(() => "");
-    },
+    onComplete() {},
     onError(error) {
       if (error instanceof Error) {
         if (error.name === "NotAllowedError") {
@@ -94,17 +84,14 @@ export default function WebAuthnContext() {
     }
   });
 
-  const { passkeysAuthStart } = usePassKeys<{ status: "Success" }>({
+  const { handlePasskeys } = usePassKeys<{ status: "Success" }>({
     params: authAdvOpts,
     onSuccess: (args) => {
-      setField(() => "");
       if (args?.status === "Success") {
         navigate("/home");
       }
     },
-    onComplete() {
-      setField(() => "");
-    },
+    onComplete() {},
     onError(error) {
       if (error instanceof Error) {
         if (error.name === "NotAllowedError") {
@@ -134,113 +121,36 @@ export default function WebAuthnContext() {
           sx={{ borderRadius: 3, boxShadow: "0 0.5rem 1rem rgb(0 0 0 / 15%)" }}
         >
           <CardContent>
-            <Typography
-              variant="h4"
-              mb={1}
-              sx={{ fontWeight: 500, fontSize: { xs: "1.875rem", sm: "2.125rem" } }}
-            >
-              {capitalizeCase(loaderData)}
-            </Typography>
-            <Typography
-              variant="h6"
-              sx={{ fontWeight: 400, fontSize: { xs: "1rem", sm: "1.25rem" } }}
-            >
-              {loaderData === "login" && (
-                <>
-                  No account yet?{" "}
-                  <Link
-                    to="/register"
-                    color="blue"
-                  >
-                    Sign up
-                  </Link>
-                </>
-              )}
-              {loaderData === "register" && (
-                <>
-                  You already have an account?{" "}
-                  <Link
-                    to="/"
-                    color="blue"
-                  >
-                    Log in
-                  </Link>
-                </>
-              )}
-            </Typography>
-
-            <TextField
-              key={loaderData + "_" + "input"}
-              label="Email"
-              name="username"
-              autoComplete={
-                loaderData === "login"
-                  ? "username webauthn"
-                  : loaderData === "register"
-                    ? "username"
-                    : undefined
-              }
-              variant="outlined"
-              type="email"
-              size="medium"
-              fullWidth
-              value={field}
-              sx={{ mt: 3 }}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                setField(event.target.value);
-              }}
-            />
-            {isAvailable ? (
-              <Stack
-                direction="row"
-                spacing={3}
-                useFlexGap
-                sx={{ mt: 3 }}
-                justifyContent="center"
+            {loaderData === "login" && (
+              <Authentication
+                key={loaderData + "_" + "field"}
+                isAvailable={isAvailable}
+                onAuthentication={handleAuthentication}
+                onPasskeys={handlePasskeys}
               >
-                {loaderData === "register" && (
-                  <Button
-                    variant="contained"
-                    fullWidth
-                    onClick={async () => {
-                      if (field === "") return;
-                      await registrationStart();
-                    }}
-                  >
-                    Register
-                  </Button>
-                )}
-                {loaderData === "login" && (
-                  <>
-                    <Button
-                      variant="contained"
-                      fullWidth
-                      onClick={async () => {
-                        await authenticationStart();
-                      }}
-                    >
-                      Authenticate
-                    </Button>
-                    <Button
-                      variant="contained"
-                      fullWidth
-                      onClick={async () => {
-                        await passkeysAuthStart();
-                      }}
-                    >
-                      Passkeys
-                    </Button>
-                  </>
-                )}
-              </Stack>
-            ) : (
-              <Typography
-                variant="h4"
-                color="red"
-                sx={{ mt: 3 }}
+                <Typography
+                  variant="h4"
+                  mb={1}
+                  sx={{ fontWeight: 500, fontSize: { xs: "1.875rem", sm: "2.125rem" } }}
+                >
+                  {capitalizeCase(loaderData)}
+                </Typography>
+              </Authentication>
+            )}
+            {loaderData === "register" && (
+              <Registration
+                key={loaderData + "_" + "field"}
+                isAvailable={isAvailable}
+                onRegistration={handleRegistration}
               >
-                瀏覽器不支援 WebAuthn
-              </Typography>
+                <Typography
+                  variant="h4"
+                  mb={1}
+                  sx={{ fontWeight: 500, fontSize: { xs: "1.875rem", sm: "2.125rem" } }}
+                >
+                  {capitalizeCase(loaderData)}
+                </Typography>
+              </Registration>
             )}
           </CardContent>
         </Card>

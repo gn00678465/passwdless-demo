@@ -19,10 +19,9 @@ export function usePassKeys<TR = unknown>({
   onSuccess,
   onError
 }: UsePassKeysOptions<TR>) {
-  const error = useRef<string | null>(null);
   const abortController = useRef<null | AbortController>(null);
 
-  async function passkeysAuthStart() {
+  async function handlePasskeys() {
     const isEnableCMA = await isCMA();
     await passkeysAuthentication({
       signal: abortController.current?.signal,
@@ -57,5 +56,5 @@ export function usePassKeys<TR = unknown>({
     abortController.current?.abort();
   }
 
-  return { passkeysAuthError: error, passkeysAuthStart, passkeysAuthAbort: abort };
+  return { handlePasskeys, passkeysAuthAbort: abort };
 }

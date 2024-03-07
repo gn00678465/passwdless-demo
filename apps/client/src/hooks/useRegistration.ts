@@ -11,11 +11,14 @@ export interface UseRegistrationOptions<TR>
   params?: RegistrationAdvanceState;
 }
 
-export function useRegistration<TR>(
-  name: string,
-  { signal, onComplete, onSuccess, onError, params = {} }: UseRegistrationOptions<TR>
-) {
-  async function registrationStart() {
+export function useRegistration<TR>({
+  signal,
+  onComplete,
+  onSuccess,
+  onError,
+  params = {}
+}: UseRegistrationOptions<TR>) {
+  async function handleRegistration(name: string) {
     await webauthnRegistration<TR>({
       getPublicKeyCreationOptions: async () => {
         const res = await startRegister({ username: name, params });
@@ -40,5 +43,5 @@ export function useRegistration<TR>(
     });
   }
 
-  return { registrationStart };
+  return { handleRegistration };
 }
