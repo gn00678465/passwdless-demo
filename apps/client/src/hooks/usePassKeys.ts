@@ -1,4 +1,3 @@
-import { useRef } from "react";
 import { passkeysAuthentication, WebauthnAuthenticationOptions, isCMA } from "@webauthn/browser";
 import { omit } from "@passless-demo/utility";
 import { startPasskeys, finishPasskeys } from "../service/passleys";
@@ -19,15 +18,11 @@ export function usePassKeys<TR = unknown>({
   onSuccess,
   onError
 }: UsePassKeysOptions<TR>) {
-  const error = useRef<string | null>(null);
-  const abortController = useRef<null | AbortController>(null);
-
-  async function passkeysAuthStart() {
+  async function handlePasskeys(signal?: AbortSignal) {
     const isEnableCMA = await isCMA();
     await passkeysAuthentication({
-      signal: abortController.current?.signal,
+      signal,
       getPublicKeyRequestOptions: async () => {
-        abortController.current = new AbortController();
         const res = await startPasskeys({ params });
         if (res.data.status === "Success") {
           if (isEnableCMA) {
@@ -53,9 +48,5 @@ export function usePassKeys<TR = unknown>({
     });
   }
 
-  function abort() {
-    abortController.current?.abort();
-  }
-
-  return { passkeysAuthError: error, passkeysAuthStart, passkeysAuthAbort: abort };
+  return { handlePasskeys };
 }

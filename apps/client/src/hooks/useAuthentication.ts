@@ -15,12 +15,15 @@ export interface UseAuthenticationOptions<TR>
   params?: AuthenticationAdvanceState;
 }
 
-export function useAuthentication<TR>(
-  username: string,
-  { params = {}, onComplete, onSuccess, onError }: UseAuthenticationOptions<TR>
-) {
-  async function authenticationStart() {
+export function useAuthentication<TR>({
+  params = {},
+  onComplete,
+  onSuccess,
+  onError
+}: UseAuthenticationOptions<TR>) {
+  async function handleAuthentication(username: string, signal?: AbortSignal) {
     await webauthnAuthentication({
+      signal,
       getPublicKeyRequestOptions: async () => {
         const res = await startAuth({ username, params });
         if (res.data.status === "Success") {
@@ -41,5 +44,5 @@ export function useAuthentication<TR>(
     });
   }
 
-  return { authenticationStart };
+  return { handleAuthentication };
 }
