@@ -22,12 +22,13 @@
     "axios": "^1.6.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-hook-form": "^7.51.0",
     "react-router-dom": "^6.19.0",
     "rxjs": "^7.8.1"
   },
   "devDependencies": {
-    "@passless/unocss-config": "workspace:*",
     "@passless-demo/utility": "workspace:*",
+    "@passless/unocss-config": "workspace:*",
     "@types/react": "^18.2.37",
     "@types/react-dom": "^18.2.15",
     "@typescript-eslint/eslint-plugin": "^6.10.0",
