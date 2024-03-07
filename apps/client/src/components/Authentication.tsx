@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import type { ReactNode } from "react";
 import { Stack, TextField, Button, Typography } from "@mui/material";
 import { Link } from "react-router-dom";
@@ -6,8 +6,8 @@ import { Link } from "react-router-dom";
 export interface AuthenticationProps {
   isAvailable: boolean;
   children?: ReactNode;
-  onAuthentication?: (name: string) => Promise<void>;
-  onPasskeys?: () => Promise<void>;
+  onAuthentication?: (name: string, single?: AbortSignal) => Promise<void>;
+  onPasskeys?: (single?: AbortSignal) => Promise<void>;
 }
 
 const Authentication = ({
@@ -17,6 +17,19 @@ const Authentication = ({
   onPasskeys
 }: AuthenticationProps) => {
   const [field, setField] = useState("");
+  const abortControllerRef = useRef<null | AbortController>(null);
+
+  useEffect(() => {
+    if (!abortControllerRef.current) {
+      abortControllerRef.current = new AbortController();
+    }
+  }, []);
+
+  function abort() {
+    abortControllerRef.current?.abort("Abort previous request");
+    abortControllerRef.current = new AbortController();
+  }
+
   return (
     <>
       {children}
@@ -59,7 +72,8 @@ const Authentication = ({
             variant="contained"
             fullWidth
             onClick={async () => {
-              await onAuthentication?.(field);
+              abort();
+              await onAuthentication?.(field, abortControllerRef.current?.signal);
             }}
           >
             Authenticate
@@ -68,7 +82,8 @@ const Authentication = ({
             variant="contained"
             fullWidth
             onClick={async () => {
-              await onPasskeys?.();
+              abort();
+              await onPasskeys?.(abortControllerRef.current?.signal);
             }}
           >
             Passkeys

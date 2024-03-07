@@ -21,8 +21,9 @@ export function useAuthentication<TR>({
   onSuccess,
   onError
 }: UseAuthenticationOptions<TR>) {
-  async function handleAuthentication(username: string) {
+  async function handleAuthentication(username: string, signal?: AbortSignal) {
     await webauthnAuthentication({
+      signal,
       getPublicKeyRequestOptions: async () => {
         const res = await startAuth({ username, params });
         if (res.data.status === "Success") {
