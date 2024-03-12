@@ -12,6 +12,8 @@
     "@webauthn-types": "pnpm --filter @webauthn/types",
     "passless-client": "pnpm --filter @passless-demo/client",
     "passless-server": "pnpm --filter @passless-demo/server",
+    "prisma:generate": "pnpm --filter @passless-demo/server prisma:generate",
+    "prisma:push": "pnpm --filter @passless-demo/server prisma:push",
     "format": "prettier --write src/",
     "dev": "run-p \"passless-client -- dev\" \"passless-server -- dev\" --",
     "build": "run-p \"passless-client -- build\" \"passless-server -- build\" --"

@@ -14,20 +14,20 @@ datasource db {
 }
 
 model User {
-  id       String @id @map("_id")
-  username String @unique
+  id String @id @map("_id")
+  username String  @unique
   created_at DateTime @default(now())
   credentials Credential[]
 }
 
 model Credential {
-  id    String @id @default(auto()) @map("_id") @db.ObjectId
+  id String @id @default(auto()) @map("_id") @db.ObjectId
   user_id String
   credential_id String @unique
   public_key String @unique
-  counter Int @default(0)
+  counter Int
   transports String
-  created_at  DateTime @default(now())
-  updated_at  DateTime @default(now())
-  user   User   @relation(fields: [user_id], references: [id])
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now())
+  user User @relation(fields: [user_id], references: [id])
 }
