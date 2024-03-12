@@ -1,4 +1,5 @@
 import sqlite from "../storage/sqlite3";
+import prisma from "../storage";
 
 export interface CredentialInfo {
   id: number;
@@ -26,19 +27,31 @@ export const credentialService = {
     transports: string
   ) {
     try {
-      const stmt = sqlite.prepare<[string, string, string, number, string]>(`
-        INSERT INTO credentials (
-          user_id,
-          credential_id,
-          public_key,
-          counter,
-          transports
-        ) VALUES (?, ?, ?, ?, ?)
-    `);
-      stmt.run(userId, credentialId, publicKey, counter, transports);
-      return { credentialId, counter, transports };
+      //   const stmt = sqlite.prepare<[string, string, string, number, string]>(`
+      //     INSERT INTO credentials (
+      //       user_id,
+      //       credential_id,
+      //       public_key,
+      //       counter,
+      //       transports
+      //     ) VALUES (?, ?, ?, ?, ?)
+      // `);
+      //   stmt.run(userId, credentialId, publicKey, counter, transports);
+      //   return { credentialId, counter, transports };
+      const result = prisma.credential.create({
+        data: {
+          user_id: userId,
+          credential_id: credentialId,
+          public_key: publicKey,
+          counter: counter,
+          transports: transports
+        }
+      });
+      await prisma.$disconnect();
+      return result;
     } catch (error) {
       console.error("Error saving new credential:", error);
+      await prisma.$disconnect();
       throw error;
     }
   },
