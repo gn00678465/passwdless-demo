@@ -85,29 +85,36 @@ sequenceDiagram
 
 - [x] 將 WebAuthn 功能模組化
 - [x] 調整為 Monorepo 資料夾結構
-- [ ] 後端驗證功能研究並實作
-- [ ] 新增 mongodb 支援
+- [x] 遷移資料庫 sqlite -> prisma + mongodb
 - [x] Dockerlize
+- [ ] 後端驗證功能研究並實作
 
-### Usage
+### Development
 
-**Client**
+**Client Env**
 
-```
+- VITE_API_HOST: API 的路徑
+
+**Server Env**
+
+- PORT: server port
+- RP_ID: 必須符合當前部署的網域
+- RP_NAME: 必須符合當前部署的網域
+- SESSION_SECRET: for session use
+- DATABASE_URL: db 的路徑
+  - mongodb: **mongodb://USERNAME:PASSWORD@HOST:PORT/DATABASE**
+
+```bash
 pnpm install
 
-pnpm passless-client dev
+pnpm prisma:generate
+
+pnpm prisma:push
+
+pnpm dev
 ```
 
-**Server**
-
-```
-pnpm install
-
-pnpm passless-server dev
-```
-
-**Docker**
+### Docker
 
 1. 準備憑證
    - **webauthn.localhost**
