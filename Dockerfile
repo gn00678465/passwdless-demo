@@ -28,4 +28,4 @@ RUN npm install pm2 -g
 EXPOSE 80
 EXPOSE 443
 
-CMD ["./scripts/migrate-and-start.sh"]
+CMD ["/bin/bash", "./scripts/migrate-and-start.sh"]
