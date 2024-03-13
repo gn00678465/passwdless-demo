@@ -4,8 +4,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "tsup --env.NODE_ENV development --watch --onSuccess \"node dist/index.mjs\"",
-    "build": "tsup"
+    "dev": "tsup --env.NODE_ENV development --format esm --watch --clean --onSuccess \"node dist/index.mjs\"",
+    "build": "tsup",
+    "prisma:generate": "npx prisma generate",
+    "prisma:push": "npx prisma db push",
+    "prisma:pull": "npx prisma db pull"
   },
   "keywords": [
     "webauthn"
@@ -14,6 +17,7 @@
   "license": "ISC",
   "dependencies": {
     "@hexagon/base64": "^1.1.28",
+    "@prisma/client": "^5.10.2",
     "@simplewebauthn/server": "^8.3.5",
     "better-sqlite3": "^9.1.1",
     "cookie-parser": "^1.4.6",
@@ -28,6 +32,7 @@
     "uuid": "^9.0.1"
   },
   "devDependencies": {
+    "@passless-demo/utility": "workspace:*",
     "@simplewebauthn/typescript-types": "^8.3.4",
     "@types/better-sqlite3": "^7.6.8",
     "@types/cookie-parser": "^1.4.6",
@@ -39,7 +44,7 @@
     "@types/uuid": "^9.0.7",
     "@webauthn/server": "workspace:*",
     "@webauthn/types": "workspace:*",
-    "@passless-demo/utility": "workspace:*",
+    "prisma": "^5.10.2",
     "tsup": "^8.0.1"
   }
 }
