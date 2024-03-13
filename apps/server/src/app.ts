@@ -6,7 +6,7 @@ import * as dotenv from "dotenv";
 import session from "express-session";
 import memorystore from "memorystore";
 
-import sqlite from "./storage/sqlite3/index";
+// import sqlite from "./storage/sqlite3/index";
 import registrationRouter from "./routes/registration";
 import authenticationRouter from "./routes/authentication";
 import passkeysRouter from "./routes/passkeys";
@@ -59,7 +59,9 @@ app.use(function (req, res, next) {
 // 自定義的錯誤處理中介軟體
 app.use(handleError);
 
-process.on("exit", () => sqlite.close());
+process.on("exit", () => {
+  // sqlite.close()
+});
 
 export default app;
 

@@ -42,10 +42,7 @@ export const handleRegisterStart = async (
   }
 
   try {
-    let user = await userService.getUserByUsername(username);
-    if (!user) {
-      user = await userService.createUser(username);
-    }
+    let user = await userService.findOrCreate(username);
 
     const credentials = await credentialService.getAllCredentialByUserId(user.id);
     const excludeCredentials = credentials.map((credential) => {

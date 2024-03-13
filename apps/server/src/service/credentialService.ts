@@ -57,88 +57,109 @@ export const credentialService = {
   },
   async getCredentialByCredentialId(credentialId: string) {
     try {
-      const stmt = sqlite.prepare<[string]>(`
-      SELECT credentials.*, users.username
-      FROM credentials
-      INNER JOIN users ON credentials.user_id = users.id
-      WHERE credential_id = ?
-      `);
-      return stmt.get(credentialId) as CredentialInfo | undefined | null;
+      // const stmt = sqlite.prepare<[string]>(`
+      // SELECT credentials.*, users.username
+      // FROM credentials
+      // INNER JOIN users ON credentials.user_id = users.id
+      // WHERE credential_id = ?
+      // `);
+      // return stmt.get(credentialId) as CredentialInfo | undefined | null;
+      const result = await prisma.credential.findUnique({ where: { credential_id: credentialId } });
+      await prisma.$disconnect();
+      return result;
     } catch (error) {
       console.error("Error retrieving credential:", error);
+      await prisma.$disconnect();
       throw error;
     }
   },
   async getAllCredentialByCredentialId(credentialId: string) {
     try {
-      const stmt = sqlite.prepare<[string]>(`
-      SELECT credentials.*, users.username
-      FROM credentials
-      INNER JOIN users ON credentials.user_id = users.id
-      WHERE credential_id = ?
-      `);
-      return (stmt.all(credentialId) || []) as CredentialInfo[];
+      // const stmt = sqlite.prepare<[string]>(`
+      // SELECT credentials.*, users.username
+      // FROM credentials
+      // INNER JOIN users ON credentials.user_id = users.id
+      // WHERE credential_id = ?
+      // `);
+      // return (stmt.all(credentialId) || []) as CredentialInfo[];
+      const result = await prisma.credential.findMany({ where: { credential_id: credentialId } });
+      await prisma.$disconnect();
+      return result;
     } catch (error) {
       console.error("Error retrieving credential:", error);
+      await prisma.$disconnect();
       throw error;
     }
   },
   async getCredentialByUserId(userId: string) {
     try {
-      const stmt = sqlite.prepare<[string]>(`
-      SELECT credentials.*, users.username
-      FROM credentials
-      INNER JOIN users ON credentials.user_id = users.id
-      WHERE user_id = ?
-      `);
-      return stmt.get(userId) as CredentialInfo | undefined | null;
+      // const stmt = sqlite.prepare<[string]>(`
+      // SELECT credentials.*, users.username
+      // FROM credentials
+      // INNER JOIN users ON credentials.user_id = users.id
+      // WHERE user_id = ?
+      // `);
+      // return stmt.get(userId) as CredentialInfo | undefined | null;
+      const result = await prisma.credential.findFirst({ where: { user_id: userId } });
+      await prisma.$disconnect();
+      return result;
     } catch (error) {
       console.error("Error retrieving credential:", error);
+      await prisma.$disconnect();
       throw error;
     }
   },
   async getAllCredentialByUserId(userId: string) {
     try {
-      const stmt = sqlite.prepare<[string]>(`
-      SELECT credentials.*, users.username
-      FROM credentials
-      INNER JOIN users ON credentials.user_id = users.id
-      WHERE user_id = ?
-      `);
-      return (stmt.all(userId) || []) as CredentialInfo[];
+      // const stmt = sqlite.prepare<[string]>(`
+      // SELECT credentials.*, users.username
+      // FROM credentials
+      // INNER JOIN users ON credentials.user_id = users.id
+      // WHERE user_id = ?
+      // `);
+      // return (stmt.all(userId) || []) as CredentialInfo[];
+      const result = await prisma.credential.findMany({ where: { user_id: userId } });
+      await prisma.$disconnect();
+      return result;
     } catch (error) {
       console.error("Error retrieving credential:", error);
+      await prisma.$disconnect();
       throw error;
     }
   },
   async updateCredentialCounterAndTime(credentialId: string, newCounter: number) {
     try {
-      const stmt = sqlite.prepare<[number, string]>(
-        "UPDATE credentials SET counter = ?, updated_at = CURRENT_TIMESTAMP WHERE credential_id = ?"
-      );
-      stmt.run(newCounter, credentialId);
+      // const stmt = sqlite.prepare<[number, string]>(
+      //   "UPDATE credentials SET counter = ?, updated_at = CURRENT_TIMESTAMP WHERE credential_id = ?"
+      // );
+      // stmt.run(newCounter, credentialId);
+      await prisma.credential.update({
+        where: { credential_id: credentialId },
+        data: { counter: newCounter }
+      });
+      await prisma.$disconnect();
     } catch (error) {
       console.error("Error updating credential counter:", error);
+      await prisma.$disconnect();
       throw error;
     }
   },
   /**
    * 移除特定的 credential
    * @param credentialId 要移除的 credential id
-   * @returns {Promise<CredentialInfo[]>}
    */
-  async deleteCredentialByCredentialId(
-    credentialId: string,
-    userId: string
-  ): Promise<CredentialInfo[]> {
+  async deleteCredentialByCredentialId(credentialId: string, userId: string) {
     try {
-      const stmt = sqlite.prepare<[string]>(`
-      DELETE FROM credentials WHERE credential_id = ?
-      `);
-      stmt.run(credentialId);
-      return await this.getAllCredentialByUserId(userId);
+      // const stmt = sqlite.prepare<[string]>(`
+      // DELETE FROM credentials WHERE credential_id = ?
+      // `);
+      // stmt.run(credentialId);
+      // return await this.getAllCredentialByUserId(userId);
+      await prisma.credential.delete({ where: { credential_id: credentialId } });
+      return this.getAllCredentialByUserId(userId);
     } catch (error) {
       console.error("Error delete credential:", error);
+      await prisma.$disconnect();
       throw error;
     }
   }

@@ -35,7 +35,6 @@ export const userService = {
       throw error;
     }
   },
-
   async createUser(username: string) {
     const id = uuidv4();
     // const stmt = sqlite.prepare<string[]>("INSERT INTO users (id, username) VALUES (?, ?)");
@@ -43,6 +42,27 @@ export const userService = {
     try {
       const result = await prisma.user.create({
         data: {
+          id: id,
+          username: username
+        }
+      });
+      await prisma.$disconnect();
+      return result;
+    } catch (error) {
+      console.error("Error saving new user:", error);
+      await prisma.$disconnect();
+      throw error;
+    }
+  },
+  async findOrCreate(username: string) {
+    const id = uuidv4();
+    try {
+      const result = await prisma.user.upsert({
+        where: {
+          username: username
+        },
+        update: {},
+        create: {
           id: id,
           username: username
         }
