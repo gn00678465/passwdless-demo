@@ -1,4 +1,5 @@
 #!/bin/bash
+cd /app
 
 pnpm prisma:generate
 pnpm prisma:push
