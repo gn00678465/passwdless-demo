@@ -27,7 +27,7 @@ services:
       - PORT=80
       - RP_ID=webauthn.localhost
       - RP_NAME=webauthn.localhost
-      # - NODE_ENV=production
+      - DATABASE_URL=
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.webauthn.tls=true"
