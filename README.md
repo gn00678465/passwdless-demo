@@ -120,6 +120,8 @@ pnpm dev
    - **webauthn.localhost**
 2. 將憑證放入根目錄 **.certs**
    - 名稱對應 **docker/dynamic_conf.yaml** 內的設定名稱
+3. webauthn service
+   - 環境變數 **DATABASE_URL** 請填入對應的 mongodb path
 
 ```
 docker compose up -d
